@@ -1,0 +1,506 @@
+#!/usr/bin/perl
+################################################################################
+#
+# Name:         dir_clean
+#
+# Author:       Ian Salt
+#
+# Date:         1st September 1999
+#
+# Description:  dir_clean a script to clean up directories, based on the
+# instructions in a config file
+#
+# Usage:        dir_clean
+#
+# Copyright (C) 1999 Ian Salt (Contact email: gpl@naecl.co.uk)
+# 
+# This program is free software; you can redistribute it and/or modify it under
+# the terms of the GNU General Public License as published by the Free Software
+# Foundation; either version 2 of the License, or (at your option) any later
+# version.
+#
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along with
+# this program; if not, write to Free Software Foundation, Inc., 675 Mass Ave,
+# Cambridge, MA 02139, USA.
+#
+################################################################################
+#
+# Include libraries
+#
+use Getopt::Std;
+use File::Path;
+
+# Pre-Initialise Variables and Constants
+#
+
+# Get Command line Arguments and print error if necessary
+#
+
+# Remove leading slashes from program name
+$prog_name=$0;
+$prog_name =~ s/.*\///;
+$prog_name =~ s/.*\\//;
+$Usage = "\nUsage: $prog_name [-c] [-h] [-t] -f <conf_file> [-d <level>]\n\n\t-h\tPrint Usage\n\n\t-c\tPrint config file format (use to create new config file)\n\n\t-t\tRun in test mode\n\n\t-d\tDebug level\n\n\t-f\tConfig File Name\n\n";
+
+sub echo_conf_format () {
+	print <<EOF;
+#
+# Format of config file is
+# 
+# <root_dir> <mask> <age> <action> <no archived/command> <archive action> <proc>
+#
+# root_dir		-	The top directory from which to start the
+#				deletion/compression must be absolute pathname
+#
+# mask			-	The wildcard which all files will have to match
+#				to be deleted/compressed
+#
+# age			-	The number of days old files will have to be to
+#				be deleted/compressed (0 means all files)
+#
+# action 		-	Consists of either a, c, d, e or D for archive,
+#				compress, delete, execute or Directory delete as
+#				well as r for recurse
+#
+# no archived		-	Only if the action string is a, archives the
+#				logfile and adds a number suffix to the end
+#
+# command		-	Only if the action string is e, runs the
+#				specified command on each matching file
+#				(command must not have arguments)
+#
+# archive action	-	Can be c, k or both. c tells to create a new
+#				file, k tells to kill -1 a process (Unix only).
+#
+# proc			-	Unix Only - If k is specified then <proc> gives
+#				process to kill. a leading / indicates a file
+#				containing a pid while a normal string specifies
+#				a process name (process name feature is platform
+#				specific and has not yet been developed for this
+#				platform)
+#
+# <root_dir> <mask> <age> <action> <no archived/command> <archive action> <proc>
+#
+EOF
+}
+
+sub print_err () {
+	print STDERR "$_[0]\n";
+}
+
+sub print_debug () {
+	if ( $debug_level >= $_[0] ) {
+		print "$_[1]";
+	}
+}
+
+sub process_dir () {
+	local $last_dir=$_[1];
+	local $local_dir=$_[0];
+	local $file;
+	&print_debug ( 3, "local dir is $local_dir\n");
+	&print_debug ( 3, "last dir is $last_dir\n");
+	# Change to the specified directory
+	#
+	&print_debug ( 3, "Changing dir to $local_dir\n");
+	chdir ($local_dir);
+	#
+	# We have to scan the directory twice. Firstly for files matching the
+	# mask and then for all directories if we are recursing
+	#
+	# For every file in the directory
+	#
+	# 1. Does it match the file mask?
+	# 2. Is it older than the file age specified?
+	# 3. Is it a regular file (for a, c, or d) ? or a directory (for D)?
+	# 4. Take relevant action (Archive, Compress, Delete or Dir Delete)
+	#
+	local @file_list=<${file_mask}>;
+	# now we have the file list we see if the age matches and if the matched
+	# name is a normal file
+	#
+	foreach $file (@file_list) {
+		&print_debug ( 3, "File is $file:\n");
+		$file=$_[0]."/".$file;
+		# is it of the right age
+		$this_file_age=-M $file;
+		&print_debug ( 3, "File is $this_file_age days old\nThreshold is $file_age days:\n");
+		if ( $this_file_age > $file_age ) {
+			# is it a normal file
+			#
+			if ( -f $file ) {
+				&print_debug ( 3, "Regular file:\t");
+				if ( $file =~ /\.gz$/ && $compress ) {
+					&print_debug ( 2, "$file ends in .gz, not compressing\n");
+				} else {
+					process_file ($file);
+				}
+			} elsif ( -d $file && ! -l $file && $dir_delete ) { # We don't want to follow links
+				if ( $test ) {
+					&print_debug ( 0, "Test Mode: Delete Dir ${file}\n");
+				} else {
+					&print_debug ( 1, "Deleting Dir ${file}\n");
+					&dir_delete ( $file );
+				}
+			} else {
+				&print_debug ( 3, "Irregular file no Action\n");
+			}
+		} else {
+			&print_debug ( 3, "Leaving $file alone\n");
+		}
+	}
+
+	if ( $recurse ) {
+		local @file_list=<*>;
+		# now we check all files to see if they are directories
+		# if they are then we start over
+		foreach $file (@file_list) {
+			&print_debug ( 2, "Checking $file\n");
+			if ( -d $file && ! -l $file ) {
+				&print_debug ( 2, "Directory Changing to $file\n");
+				&process_dir ($local_dir."/".$file, $local_dir);
+			}
+		}
+	}
+
+	&print_debug ( 3, "Changing dir to $last_dir\n");
+	chdir ($last_dir);
+}
+
+sub dir_delete () {
+	rmtree($_[0]);
+}
+
+sub process_file () {
+	local $target_file=$_[0];
+	if ( $compress ) {
+		if ( $test ) {
+			&print_debug (0,"Test Mode: Compress ${target_file}\n");
+		} else {
+                        &print_debug (1,"Compressing ${target_file}\n");
+                        # @args = ("gzip -f", "${target_file}");
+                        # if ( system(@args) ) {
+                        $cmd = "gzip -f $target_file";
+                        if ( system($cmd) ) {
+                                &print_err ("Failed to compress ${target_file}\n");
+                        }
+                }
+	} elsif ( $file_delete ) {
+		if ( $test ) {
+			&print_debug (0, "Test Mode: Delete ${target_file}\n");
+		} else {
+			&print_debug (1, "Deleting ${target_file}\n");
+			unless ( unlink $target_file ) {
+				&print_err ("Failed to delete $target_file: $!\n");
+			}
+		}
+	} elsif ( $archive ) {
+		if ( $test ) {
+			&print_debug (0,"Test Mode: Archive ${target_file}\n");
+		} else {
+			&print_debug (1,"Archiving ${target_file}\n");
+			if ( -f "${target_file}.$no_to_keep" ) {
+				unless ( unlink "${target_file}.$no_to_keep" ) {
+					&print_err ("Failed to delete ${target_file}.$no_to_keep\n");
+				} else {
+					&print_debug ( 0, "Deleted ${target_file}.${no_to_keep}\n");
+				}
+			}
+			for ( $n = $no_to_keep ; $n > 1; $n-- ) {
+				$p=$n - 1;
+				$old_file="${target_file}.$p";
+				$new_file="${target_file}.$n";
+				if ( -e $old_file && ! -e $new_file ) {
+					&print_debug ( 0, "Renamed $old_file to $new_file\n");
+					unless ( rename ( "$old_file", "$new_file") ) {
+						&print_err ("Failed to rename $old_file\n");
+						return;
+					}
+				}
+			}
+			$old_file="${target_file}";
+			$new_file="${target_file}.1";
+			# and then rename the original
+			if ( -e $old_file && ! -e $new_file ) {
+				&print_debug ( 0, "Renamed $old_file to $new_file\n");
+				unless ( rename ( "$old_file", "$new_file") ) {
+					&print_err ("Failed to rename $old_file\n");
+					return;
+				}
+			}
+			if ( $create_new_file ) {
+				&print_debug ( 0, "Created $old_file\n");
+				open ( OUT, ">$old_file" );
+			}
+			if ( $kill_proc ) {
+				&print_debug ( 0, "Killing process from ${proc}\n");
+				if ( $proc =~ /\// ) {
+					#proc is a filename, set pid to contents of file
+					&print_debug ( 2, "$proc is a filename\n");
+					unless ( open ( PIDFILE, "< ${proc}")) {
+						&print_err ("Failed to open pidfile ${proc}\n");
+						return;
+					}
+					$pid=<PIDFILE>;
+					chomp $pid;
+					&print_debug ( 2, "PID is $pid\n");
+				} else {
+					&print_debug ( 2, "$proc is not a filename\n");
+					# proc is a process name, search for all processes
+					# which match, if there are more than one process
+					# then we give an error and don't kill 
+					# 
+					$pid=1;
+				}
+				&print_debug ( 1, "Killing process $pid\n");
+                        	# @args = ("kill", "-1", "$pid");
+                        	# if ( system(@args) ) {
+                        	$cmd = ("kill -1 $pid");
+                        	if ( system($cmd) ) {
+                                	&print_err ("Failed to kill -HUP $pid\n");
+                        	}
+			}
+		}
+	} elsif ( $command ) {
+		if ( $test ) {
+			&print_debug (0,"Test Mode: ${command} ${target_file}\n");
+		} else {
+			&print_debug (1,"Running ->${command}<- on ${target_file}\n");
+                        # @args = ("${command}", "${target_file}");
+                        # if ( system(@args) ) {
+                        $cmd = ("$command $target_file");
+                        if ( system($cmd) ) {
+                                &print_err ("Failed to $command $target_file\n");
+                        }
+		}
+	}
+}
+
+# Check that the no invalid options have been set
+# Also check if -h has been asked for
+#
+getopts ('cd:hf:tV');
+
+if ( $Getopt::Std::opt_V ) {
+        my $prog_version;
+        my $prog_file;
+        my $prog_date;
+        my $prog_author;
+        my $rcs_info=0;
+        # Work out revision and print it
+        open (SOURCE, "<$0") or die;
+        while (<SOURCE>) {
+                chomp;
+                if ( /^# .Revision/ ) {
+                        $prog_version=$_;
+                        $prog_version =~ s/^# .Revision: //;
+                        $prog_version =~ s/ \$//;
+                }
+                if ( /^# .RCSfile/ ) {
+                        $prog_file=$_;
+                        $prog_file =~ s/^# .RCSfile: //;
+                        $prog_file =~ s/,v \$//;
+                        $rcs_info=1;
+                }
+                if ( /^# .Date:/ ) {
+                        $prog_date=$_;
+                        $prog_date =~ s/^# .Date: //;
+                        $prog_date =~ s/ \$//;
+                }
+                if ( /^# Author:/ ) {
+                        $prog_author=$_;
+                        $prog_author =~ s/^# Author:\s*//;
+                        $prog_author =~ s/ \$//;
+                }
+        }
+        if ( $rcs_info ) {
+                print "\n$prog_file version $prog_version, written by ${prog_author}, last changed $prog_date\n\n";
+        } else {
+                print "\nNo Version Information Available\n\n";
+        }
+        exit 0;
+}
+
+if ( $Getopt::Std::opt_c ) {
+	&echo_conf_format;
+	exit;
+}
+
+if ( $Getopt::Std::opt_h ) {
+	print $Usage;
+	exit;
+}
+
+unless ( $Getopt::Std::opt_f ) {
+	print $Usage;
+	exit 1;
+}
+$config_file=$Getopt::Std::opt_f;
+
+if ( $Getopt::Std::opt_d ) {
+	$debug_level=$Getopt::Std::opt_d;
+} else {
+	$debug_level=0;
+}
+
+if ( $Getopt::Std::opt_t ) {
+	$test=1;
+} else {
+	$test=0;
+}
+
+#
+# Check that config file exists
+#
+open ( CONFIG_FILE, $config_file ) or die "\nCould not open config file $config_file for reading\n\n";
+
+# For each line of config file
+#
+while  (<CONFIG_FILE>) {
+	# ignore comment lines and just white space
+	if ( /^\s*#/ || /^\s*$/ ) {
+		next;
+	}
+	&print_debug ( 1, "\nProcessing following line\n$_\n");
+	@values=split;
+	$base_dir=$values[0];
+	$file_mask=$values[1];
+	$file_age=$values[2];
+	$action_string=$values[3];
+	$no_to_keep=$values[4];
+	$command=$values[4];
+	$action_after_archive=$values[5];
+	$proc=$values[6];
+	&print_debug ( 4, "base_dir is $base_dir\n");
+	&print_debug ( 4, "file_mask is $file_mask\n");
+	&print_debug ( 4, "file_age is $file_age\n");
+	&print_debug ( 4, "action_string is $action_string\n");
+	&print_debug ( 4, "no_to_keep/command is $no_to_keep\n");
+	&print_debug ( 4, "action_after_archive is $action_after_archive\n");
+	&print_debug ( 4, "proc is $proc\n");
+
+
+	# Directory properties are different between NT and Unix
+	#
+
+	# Convert DOS \ to unix /
+	&print_debug ( 3, "base dir is $base_dir\n");
+	$base_dir =~ s/\\/\//g;
+	&print_debug ( 3, "base dir is $base_dir\n");
+
+	if ( $^O eq "MSWin32" ) {
+		# Does root dir start with /
+		if ( $base_dir !~ /^.:\// ) {
+			&print_err ("\nError:\tBase Directory is not an absolute pathname (e.g. C:\TEMP), following line will not be processed!\n$_\n");
+			next;
+		}
+	} else {
+		# Does root dir start with /
+		if ( $base_dir !~ /^\// ) {
+			&print_err ("\nError:\tBase Directory is not an absolute pathname (e.g. /var/tmp), following line will not be processed!\n$_\n");
+			next;
+		}
+	}
+
+
+
+	
+	# Is root directory valid
+	if ( ! -d $base_dir ) {
+		&print_err ("\nError:\tBase Directory does not exist, following line will not be processed!\n$_\n");
+		next;
+	}
+
+	# is the age field a number
+	if( $file_age !~ /^[0-9,.]+$/ ) {
+		&print_err ("\nError:\tFile Age is not numeric, following line will not be processed!\n$_\n");
+		next;
+	}
+
+	# is the action string valid? To be valid, we must have an a, c, d, e or D,
+	# plus an optional r, nothing else
+	#
+
+	$number_of_opts=0;
+
+	if ( $action_string =~ /c/ ) {
+		$compress=1;
+		$number_of_opts++;
+	} else {
+		$compress=0;
+	}
+
+	if ( $action_string =~ /d/ ) {
+		$file_delete=1;
+		$number_of_opts++;
+	} else {
+		$file_delete=0;
+	}
+
+	if ( $action_string =~ /e/ ) {
+		&print_debug ( 2, "Running command ->${command}<-\n");
+		$exec_cmd=1;
+		$number_of_opts++;
+		# is the command field valid
+		if( "$command" eq "" ) {
+			&print_err ("\nError:\t->${command}<- is not a valid command, following line will not be processed!\n$_\n");
+			next;
+		}
+	} else {
+		$exec_cmd=0;
+	}
+
+	if ( $action_string =~ /D/ ) {
+		$dir_delete=1;
+		$number_of_opts++;
+	} else {
+		$dir_delete=0;
+	}
+
+	if ( $action_string =~ /a/ ) {
+		$archive=1;
+		$number_of_opts++;
+		# is the number to keep field a number
+		if( $no_to_keep !~ /^[0-9]+$/ || $no_to_keep eq "" || $no_to_keep == 0 ) {
+			&print_err ("\nError:\tNo to keep is not a positive integer, following line will not be processed!\n$_\n");
+			next;
+		}
+		# is the action after field a c
+		if ( $action_after_archive =~ /c/ ) {
+			$create_new_file=1;
+		} else {
+			$create_new_file=0;
+		}
+		# is the action after field a k
+		if ( $action_after_archive =~ /k/ ) {
+			$kill_proc=1;
+		} else {
+			$kill_proc=0;
+		}
+	} else {
+		$archive=0;
+	}
+
+	if ( $action_string =~ /r/ ) {
+		$recurse=1;
+	} else {
+		$recurse=0;
+	}
+
+	# We must exactly one option from a, c, d or D and no extra characters
+	#
+	if ( $action_string =~ /[^acdeDr]/ || ( $number_of_opts != 1 ) || ( $dir_delete && $recurse )) {
+		&print_err ("\nError:\tAction String is not valid, following line will not be processed!\n$_\n");
+		next;
+	}
+
+	# OK now we have decided what we are doing we carry out required action
+	#
+	# Now we cd to the dir
+        chdir ($base_dir);
+        &process_dir ($base_dir, $base_dir);
+}

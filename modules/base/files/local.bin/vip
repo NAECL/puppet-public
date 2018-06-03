@@ -1,0 +1,14 @@
+#!/bin/bash
+#
+# vip - Vi In Path
+#
+# search path for filename specified, and edit it with vi
+#
+
+if [ $# -ne 1 ]
+then
+    echo "Error: Needs a filename"
+    exit 1
+fi
+
+vi $(which $1)

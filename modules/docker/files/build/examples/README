@@ -1,0 +1,6 @@
+# To create an new docker image
+docker build -t build/mycontainer <dir>
+where dir = directory with Dockerfile in
+
+# You can also redirect from file, E.g.
+docker build -t build/mycontainer < Dockerfile

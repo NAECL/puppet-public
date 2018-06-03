@@ -1,0 +1,13 @@
+<Directory "/var/www/<%= @name %>">
+    Options Indexes FollowSymLinks
+    AllowOverride All
+</Directory>
+
+<VirtualHost *:80>
+    ServerAdmin webmaster@mysite.com
+    DocumentRoot /var/www/<%= @name %>
+    ServerName <%= @name %>
+    ErrorLog /var/log/httpd/<%= @name %>-error_log
+    CustomLog /var/log/httpd/<%= @name %>-access_log common
+</VirtualHost>
+

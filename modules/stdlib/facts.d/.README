@@ -1,0 +1,4 @@
+This directory has been added solely as a workaround for a trivial Puppet bug:
+
+https://tickets.puppetlabs.com/browse/PUP-3655
+

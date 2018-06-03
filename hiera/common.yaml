@@ -1,0 +1,21 @@
+---
+
+wordpress::config::sites:
+  site1:
+    sitename:   'odin.aws.naecl.com'
+    dbname: 'odin_naecl'
+
+  site2:
+    sitename:   'caramel.aws.naecl.com'
+    dbname: 'caramel_naecl'
+
+base::domain:       'local'
+
+ntp::servers:
+  - '0.centos.pool.ntp.org'
+  - '1.centos.pool.ntp.org'
+
+# ntp::servers:
+#   - '0.amazon.pool.ntp.org'
+#   - '1.amazon.pool.ntp.org'
+

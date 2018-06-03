@@ -1,0 +1,48 @@
+#
+# Format of config file is
+# 
+# <root_dir> <mask> <age> <action> <no archived/command> <archive action> <proc>
+#
+# root_dir		-	The top directory from which to start the
+#				deletion/compression must be absolute pathname
+#
+# mask			-	The wildcard which all files will have to match
+#				to be deleted/compressed
+#
+# age			-	The number of days old files will have to be to
+#				be deleted/compressed (0 means all files)
+#
+# action 		-	Consists of either a, c, d, e or D for archive,
+#				compress, delete, execute or Directory delete as
+#				well as r for recurse
+#
+# no archived		-	Only if the action string is a, archives the
+#				logfile and adds a number suffix to the end
+#
+# command		-	Only if the action string is e, runs the
+#				specified command on each matching file
+#				(command must not have arguments)
+#
+# archive action	-	Can be c, k or both. c tells to create a new
+#				file, k tells to kill -1 a process (Unix only).
+#
+# proc			-	Unix Only - If k is specified then <proc> gives
+#				process to kill. a leading / indicates a file
+#				containing a pid while a normal string specifies
+#				a process name (process name feature is platform
+#				specific and has not yet been developed for this
+#				platform)
+#
+# <root_dir> <mask> <age> <action> <no archived/command> <archive action> <proc>
+#
+/var/log                         watermark_websites.log.*   90  d
+/var/log                         watermark_websites.log.*   30  c
+/var/log                           backup_wordpress.log.*   90  d
+/var/log                           backup_wordpress.log.*   30  c
+<% scope['wordpress::config::sites'].each do |hash| -%>
+<% hash.each do |key| -%>
+<% if key['name'] -%>
+/var/lib/siteBackups/<%= key['name'] %>          *   7  d
+<% end -%>
+<% end -%>
+<% end -%>

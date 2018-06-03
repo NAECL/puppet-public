@@ -1,0 +1,7 @@
+############################################
+# WARNING:
+# Managed by puppet - DO NOT modify locally.
+############################################
+
+<% scope.lookupvar('ntp::servers').each do |ntp| %>server <%= ntp %>
+<% end %>

@@ -1,0 +1,14 @@
+
+Hostname            <%= scope['::custom_hostname'] %>.<%= scope['base::domain'] %>
+IP Address          <%= scope['::ipaddress_eth0'] %>
+
+Role                <%= scope['base::role'] %>
+<% if  scope['::custom_sub_role'] != 'undef'  -%>
+Sub Role            <%= scope['::custom_sub_role'] %>
+<% end -%>
+
+Manufacturer        <%= scope['::manufacturer'] %>
+Operating System    <%= scope['::operatingsystem'] %> <%= scope['::operatingsystemrelease'] %>
+Processors          <%= scope['::processorcount'] %>
+RAM Installed       <%= scope['::memorysize'] %>
+

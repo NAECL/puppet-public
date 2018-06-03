@@ -1,0 +1,23 @@
+#!/bin/bash
+
+PATH=/usr/local/sbin:/sbin:/bin:/usr/sbin:/usr/bin
+
+password=$(/usr/bin/openssl rand -base64 12)
+
+# Setup root account in mysql database
+
+echo "UPDATE mysql.user SET Password = PASSWORD('${password}') WHERE User = 'root';" | mysql
+echo "DELETE FROM mysql.user WHERE User = ''" | mysql
+echo "DROP DATABASE test" | mysql
+echo "FLUSH PRIVILEGES" | mysql
+
+# Now setup login access
+
+echo "[client]
+user=root
+password=${password}
+
+" > /root/.my.cnf
+
+chmod 0600 /root/.my.cnf
+

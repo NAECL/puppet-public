@@ -1,0 +1,85 @@
+#!/bin/bash
+
+. /etc/build_custom_config
+
+if [ "${ENVIRONMENT}" = "" ]
+then
+    environment=production
+else
+    environment=${ENVIRONMENT}
+fi
+
+download=0
+roleOptions="base wordpress docker jenkins"
+progname=$(basename $0)
+USAGE="
+${progname}: [-h] [-e <environment>] [-n] [-v <version>] [-N]
+
+	-e	Environment (default=${environment})
+
+	-n	Run in noop mode
+
+	-N	New Download Of Puppet Code
+
+	-r	Role (Default $ROLE - Options = ${roleOptions})
+
+	-h	Help
+
+"
+
+# Process Command line args
+#
+
+while getopts ":hnr:e:N" nextarg  >/dev/null 2>&1
+do
+        case $nextarg in
+                "h")    echo -e "$USAGE"
+			exit 0
+                        ;;
+                "N")    download=1
+                        ;;
+                "e")    environment=${OPTARG}
+                        ;;
+                "r")    ROLE=${OPTARG}
+                        ;;
+                "n")    noop="--noop"
+                        ;;
+                *)      echo "Error: flag -${OPTARG} not supported or used without an argument"
+                        exit 1
+                        ;;
+        esac
+done
+shift_ind=$(expr $OPTIND - 1)
+shift $shift_ind
+
+if [ "${ROLE}" = "" ]
+then
+	ROLE="base"
+fi
+
+case $ROLE in
+	"base")         role="include role::base"
+                    ;;
+	"wordpress")    role="include role::wordpress_build"
+                    ;;
+	"jenkins")      role="include role::jenkins_build"
+                    ;;
+	"docker")       role="include role::docker_build"
+                    ;;
+	*)              echo "Error: Role ${OPTARG} not supported"
+                    exit 1
+                    ;;
+esac
+
+module_dir=/etc/puppetlabs/code/environments/${environment}/modules
+
+echo -e "\nInfo: Building a $ROLE server from the ${environment} repository\n"
+
+if [ ${download} -eq 1 ]
+then
+	cd ${module_dir}
+	git pull
+fi
+
+puppet apply -t ${noop} --modulepath=${module_dir} -e "${role}"
+

@@ -1,0 +1,11 @@
+############################################
+# WARNING:
+# Managed by puppet - DO NOT modify locally.
+############################################
+
+127.0.0.1	localhost.localdomain	localhost
+<%= scope.lookupvar('::ipaddress') %> <%= scope.lookupvar('base::servername') %>.<%= scope.lookupvar('base::domain') %> <%= scope.lookupvar('::custom_hostname') %>
+
+<% scope.lookupvar('hosts::entries').each do |entry| -%>
+<%= entry %>
+<% end -%>
