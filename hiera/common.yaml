@@ -2,12 +2,8 @@
 
 wordpress::config::sites:
   site1:
-    sitename:   'odin.aws.naecl.com'
-    dbname: 'odin_naecl'
-
-  site2:
-    sitename:   'caramel.aws.naecl.com'
-    dbname: 'caramel_naecl'
+    sitename: 'www.local.com'
+    dbname:   'www_local_com'
 
 base::domain:       'local'
 
