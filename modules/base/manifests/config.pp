@@ -138,6 +138,10 @@ class base::config (
     source  => 'puppet:///modules/base/root-bashrc',
   }
 
+  # Hack for systems without selinux installed, still create this file
+  file {'/etc/selinux/config':
+    ensure => present,
+  } ->
   file_line {'disable-selinux':
     path   => '/etc/selinux/config',
     line   => "SELINUX=disabled",
