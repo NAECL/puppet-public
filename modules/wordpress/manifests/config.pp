@@ -74,7 +74,7 @@ class wordpress::config (
   $install_opsweb = undef,
 ) {
 
-  $wpversion = hiera('wordpress/version','4.9.1')
+  $wordpress_version = $wordpress::wordpress_version
 
   file {'/etc/php.ini':
     ensure  => present,
@@ -168,24 +168,24 @@ class wordpress::config (
     minute  => 0,
   }
 
-  exec {"download-wordpress-$wpversion.tar.gz":
-    command => "/usr/bin/wget http://aws.naecl.co.uk/public/build/dsl/wordpress-$wpversion.tar.gz",
-    creates => "/usr/local/buildfiles/wordpress-$wpversion.tar.gz",
+  exec {"download-wordpress-$wordpress_version.tar.gz":
+    command => "/usr/bin/wget http://aws.naecl.co.uk/public/build/dsl/wordpress-$wordpress_version.tar.gz",
+    creates => "/usr/local/buildfiles/wordpress-$wordpress_version.tar.gz",
     cwd     => '/usr/local/buildfiles',
   } ->
 
-  file {"/usr/local/buildfiles/wordpress-$wpversion.tar.gz":
+  file {"/usr/local/buildfiles/wordpress-$wordpress_version.tar.gz":
     owner => 'root',
   } ->
 
   exec {'create-usr-share-wordpress':
-    command => "/bin/tar zxf /usr/local/buildfiles/wordpress-$wpversion.tar.gz",
+    command => "/bin/tar zxf /usr/local/buildfiles/wordpress-$wordpress_version.tar.gz",
     cwd     => '/usr/share',
     creates => '/usr/share/wordpress',
   } ->
 
   file {'/usr/share/wordpress/wp-config.php':
-    source  => "puppet:///modules/wordpress/wp-config-$wpversion.php",
+    source  => "puppet:///modules/wordpress/wp-config-$wordpress_version.php",
   } ->
 
   file {'/etc/wordpress':
