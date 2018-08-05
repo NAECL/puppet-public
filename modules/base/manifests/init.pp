@@ -2,7 +2,6 @@
 class base (
   $role             = 'base',
   $domain           = 'local',
-  $install_packages = true,
 ) {
   $servername       = $::custom_hostname
 
@@ -14,4 +13,5 @@ class base (
   include stdlib
   include ntp
   include hosts
+  include packages
 }
