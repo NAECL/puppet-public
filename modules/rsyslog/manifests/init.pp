@@ -2,6 +2,8 @@ class rsyslog (
   $role      = 'client',
   $collector = 'localhost',
 ) {
+    $servername = $base::servername
+
     service {'rsyslog':
       enable => true,
       ensure => running,
@@ -26,20 +28,20 @@ class rsyslog (
       source => 'puppet:///modules/rsyslog/ca.pem',
     } ->
 
-    file {'/etc/pki/rsyslog/collector-cert.pem':
+    file {"/etc/pki/rsyslog/${servername}-cert.pem":
       ensure => present,
       owner  => 'root',
       group  => 'root',
       mode   => '0640',
-      source => 'puppet:///modules/rsyslog/collector-cert.pem',
+      source => "puppet:///modules/rsyslog/${servername}-cert.pem",
     } ->
 
-    file {'/etc/pki/rsyslog/collector-key.pem':
+    file {"/etc/pki/rsyslog/${servername}-key.pem":
       ensure => present,
       owner  => 'root',
       group  => 'root',
       mode   => '0640',
-      source => 'puppet:///modules/rsyslog/collector-key.pem',
+      source => "puppet:///modules/rsyslog/${servername}-key.pem",
     } ->
 
     file {'/etc/rsyslog.conf':
