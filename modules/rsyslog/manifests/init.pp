@@ -6,6 +6,10 @@ class rsyslog (
       ensure => running,
     }
 
+    package {'rsyslog-gnutls':
+      ensure => present,
+    } ->
+
     file {'/etc/rsyslog.conf':
       owner   => 'root',
       group   => 'root',
