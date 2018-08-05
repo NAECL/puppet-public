@@ -1,4 +1,4 @@
-class {'packages':
+class packages {
     package {[
         'wget',
     ]:
