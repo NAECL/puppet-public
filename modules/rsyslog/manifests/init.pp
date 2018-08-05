@@ -1,5 +1,6 @@
 class rsyslog (
-  $role = 'client',
+  $role      = 'client',
+  $collector = 'localhost',
 ) {
     service {'rsyslog':
       enable => true,
