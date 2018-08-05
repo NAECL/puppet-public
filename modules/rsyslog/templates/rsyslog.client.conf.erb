@@ -26,7 +26,7 @@ $DefaultNetstreamDriverCertFile /etc/pki/rsyslog/<%= scope['base::servername'] %
 $DefaultNetstreamDriverKeyFile /etc/pki/rsyslog/<%= scope['base::servername'] %>-key.pem
 
 $InputTCPServerStreamDriverAuthMode x509/name
-$InputTCPServerStreamDriverPermittedPeer *.aws.naecl.com
+$InputTCPServerStreamDriverPermittedPeer *.<%= scope['base::domain'] %>
 $InputTCPServerStreamDriverMode 1 # run driver in TLS-only mode
 
 # End OF TCP syslog reception

@@ -4,8 +4,8 @@
 ############################################
 
 127.0.0.1	localhost.localdomain	localhost
-<%= scope.lookupvar('::ipaddress') %> <%= scope.lookupvar('base::servername') %>.<%= scope.lookupvar('base::domain') %> <%= scope.lookupvar('::custom_hostname') %>
+<%= scope['::ipaddress'] %> <%= scope['base::servername'] %>.<%= scope['base::domain'] %> <%= scope['base::servername'] %>
 
-<% scope.lookupvar('hosts::entries').each do |entry| -%>
+<% scope['hosts::entries'].each do |entry| -%>
 <%= entry %>
 <% end -%>

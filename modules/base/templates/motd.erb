@@ -1,5 +1,5 @@
 
-Hostname            <%= scope['::custom_hostname'] %>.<%= scope['base::domain'] %>
+Hostname            <%= scope['base::servername'] %>.<%= scope['base::domain'] %>
 IP Address          <%= scope['::ipaddress_eth0'] %>
 
 Role                <%= scope['base::role'] %>
