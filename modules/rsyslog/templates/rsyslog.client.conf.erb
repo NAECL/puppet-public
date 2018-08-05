@@ -79,10 +79,5 @@ local7.*                                                /var/log/boot.log
 $DefaultNetstreamDriver gtls
 
 # certificate files
-$DefaultNetstreamDriverCAFile /etc/pki/tls/private/ca-cert.pem
-$DefaultNetstreamDriverCertFile /etc/pki/tls/private/sender-cert.pem
-$DefaultNetstreamDriverKeyFile /etc/pki/tls/private/sender-key.pem
-$ActionSendStreamDriverAuthMode x509/name
-$ActionSendStreamDriverMode 1 # run driver in TLS-only mode
 *.* @@<%= scope['rsyslog::collector'] %>:10514
 # ### end of the forwarding rule ###
