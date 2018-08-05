@@ -1,10 +1,5 @@
 ---
 
-wordpress::config::sites:
-  site1:
-    sitename: 'www.local.com'
-    dbname:   'www_local_com'
-
 base::domain:       'local'
 
 ntp::servers:

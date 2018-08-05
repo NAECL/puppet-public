@@ -8,5 +8,5 @@ defaults:
 :hierarchy:
     - name: "Common To Everything"
       path: "common.yaml"
-    - name: "Node Specific"
-      path: "${::fqdn}.yaml"
+    - name: "Customised Yaml"
+      path: "custom.yaml"
