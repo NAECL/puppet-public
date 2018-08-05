@@ -74,15 +74,18 @@ esac
 distro=$(lsb_release -i | awk '{print $3}')
 module_dir=/etc/puppetlabs/code/environments/${environment}/modules
 
-if [ "${distro}" == "CentOS" -o "${distro}" == "RedHatEnterpriseServer" ]
-then
-    module_dir=/etc/puppetlabs/puppet/code/environments/${environment}/modules
-fi
-
-if [ "${distro}" == "AmazonAMI" ]
-then
-    module_dir=/etc/puppet/environments/${environment}/modules
-fi
+case ${distro} in
+if [ "${distro}" ==
+    "CentOS" || "RedHatEnterpriseServer")   puppet=/opt/puppetlabs/bin/puppet
+                                            module_dir=/etc/puppetlabs/puppet/code/environments/${environment}/modules
+                                            ;;
+    "AmazonAMI")                            puppet=/usr/bin/puppet
+                                            module_dir=/etc/puppet/environments/${environment}/modules
+                                            ;;
+    "*")                                    echo "Error: Distribution ${distro} not supported"
+                                            exit 1
+                                            ;;
+esac
 
 echo -e "\nInfo: Building a $ROLE server from the ${environment} repository\n"
 
@@ -92,5 +95,5 @@ then
 	git pull
 fi
 
-puppet apply -t ${noop} --modulepath=${module_dir} -e "${role}"
+${puppet} apply -t ${noop} --modulepath=${module_dir} -e "${role}"
 
