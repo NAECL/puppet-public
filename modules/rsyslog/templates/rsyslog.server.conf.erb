@@ -72,8 +72,3 @@ uucp,news.crit                                          /var/log/spooler
 
 # Save boot messages also to boot.log
 local7.*                                                /var/log/boot.log
-
-
-# ### begin forwarding rule ###
-*.* @@<%= scope['rsyslog::collector'] %>:10514
-# ### end of the forwarding rule ###
