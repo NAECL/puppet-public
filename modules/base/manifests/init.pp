@@ -2,8 +2,8 @@
 class base (
   $role             = 'base',
   $domain           = 'local',
+  $servername       = 'hostname',
 ) {
-  $servername       = $::custom_hostname
 
   # classes that require ordering
   class {'base::config': } ->
