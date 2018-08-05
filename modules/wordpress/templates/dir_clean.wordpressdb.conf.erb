@@ -39,10 +39,13 @@
 /var/log                         watermark_websites.log.*   30  c
 /var/log                           backup_wordpress.log.*   90  d
 /var/log                           backup_wordpress.log.*   30  c
+/var/log                           certbot_renew.log.*      90  d
+/var/log                           certbot_renew.log.*      30  c
 <% scope['wordpress::config::sites'].each do |hash| -%>
 <% hash.each do |key| -%>
-<% if key['name'] -%>
-/var/lib/siteBackups/<%= key['name'] %>          *   7  d
+<% if key['sitename'] -%>
+/var/lib/siteBackups/<%= key['sitename'] %>          *.gz   6  d
+/var/lib/siteBackups/<%= key['sitename'] %>          *.snar 8  d
 <% end -%>
 <% end -%>
 <% end -%>

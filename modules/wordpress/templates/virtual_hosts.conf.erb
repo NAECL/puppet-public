@@ -1,13 +1,18 @@
-<Directory "/var/www/<%= @name %>">
+<Directory "/var/www/<%= @sitename %>">
     Options Indexes FollowSymLinks
     AllowOverride All
 </Directory>
 
 <VirtualHost *:80>
-    ServerAdmin webmaster@mysite.com
-    DocumentRoot /var/www/<%= @name %>
-    ServerName <%= @name %>
-    ErrorLog /var/log/httpd/<%= @name %>-error_log
-    CustomLog /var/log/httpd/<%= @name %>-access_log common
+    ServerAdmin webmaster@local.com
+    DocumentRoot /var/www/<%= @sitename %>
+    ServerName <%= @sitename %>
+    ErrorLog /var/log/httpd/<%= @sitename %>-error_log
+    CustomLog /var/log/httpd/<%= @sitename %>-access_log common
+<% if @sslcert == 'true' -%>
+RewriteEngine on
+RewriteCond %{SERVER_NAME} =<%= @sitename %>
+RewriteRule ^ https://%{SERVER_NAME}%{REQUEST_URI} [END,NE,R=permanent]
+<% end -%>
 </VirtualHost>
 

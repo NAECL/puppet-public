@@ -33,6 +33,7 @@ grep -q "${image}:" ${watermarks}
 if [ $? -ne 0 ]
 then
     echo "Watermarking ${image}"
+    ownership=$(stat -c %U.%G ${image})
     mv ${image} ${temp_image}
     /bin/composite -gravity south -geometry +0+10 ${watermark} ${temp_image} ${image}
     if [ $? -ne 0 ]
@@ -42,6 +43,7 @@ then
         exit 1
     else
         rm ${temp_image}
+        chown ${ownership} ${image}
         echo "${image}:" >> ${watermarks}
     fi
 fi

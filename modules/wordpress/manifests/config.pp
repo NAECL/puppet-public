@@ -1,15 +1,30 @@
 define createWebsite (
   $sitename,
   $dbname,
+  $sslcert = 'false',
 ) {
-
   file {"/etc/httpd/conf.d/$sitename.conf":
     ensure  => present,
     owner   => 'root',
     group   => 'root',
-    mode    => '0640',
+    mode    => '0644',
     content => template('wordpress/virtual_hosts.conf.erb'),
     notify  => Service['httpd'],
+  }
+
+  if ($sslcert == 'true') {
+    file {"/etc/httpd/conf.d/$sitename-le-ssl.conf":
+        ensure  => present,
+        owner   => 'root',
+        group   => 'root',
+        mode    => '0644',
+        content => template('wordpress/virtual_hosts.ssl.conf.erb'),
+        notify  => Service['httpd'],
+    }
+  } else {
+    file {"/etc/httpd/conf.d/$sitename-le-ssl.conf":
+        ensure  => absent,
+    }
   }
 
   exec {"setup-web-$dbname":
@@ -50,20 +65,31 @@ define createWebsite (
     owner   => 'root',
     group   => 'root',
     mode    => '0750',
-    source  => [ "puppet:///modules/wordpress/$sitename.png", 'puppet:///modules/wordpress/default.png' ],
+    source  => "puppet:///modules/wordpress/$sitename.png",
   }
 }
 
 class wordpress::config (
-  $sites     = [],
-  $wpversion = '4.9.1',
+  $sites          = [],
+  $install_opsweb = undef,
 ) {
+
+  $wpversion = hiera('wordpress/version','4.9.1')
+
   file {'/etc/php.ini':
     ensure  => present,
     owner   => 'root',
     group   => 'root',
     mode    => '0644',
     source  => 'puppet:///modules/wordpress/php.ini',
+  }
+
+  file {'/usr/local/bin/renew_certs.sh':
+    ensure  => present,
+    owner   => 'root',
+    group   => 'root',
+    mode    => '0750',
+    source  => 'puppet:///modules/wordpress/renew_certs.sh',
   }
 
   file {'/usr/local/bin/watermark_websites.sh':
@@ -81,6 +107,13 @@ class wordpress::config (
     minute  => 0,
   }
 
+  cron { 'renew_certs':
+    command => '/usr/local/bin/renew_certs.sh > /dev/null 2>&1',
+    user    => 'root',
+    hour    => 1,
+    minute  => 23,
+  }
+
   file {'/usr/local/bin/backup_websites.sh':
     ensure  => present,
     owner   => 'root',
@@ -92,7 +125,7 @@ class wordpress::config (
   cron { 'backup_websites':
     command => '/usr/local/bin/backup_websites.sh >/dev/null 2>&1',
     user    => 'root',
-    hour    => 2,
+    hour    => 3,
     minute  => 0,
   }
 
@@ -131,22 +164,22 @@ class wordpress::config (
   cron { '/usr/local/config/dir_clean.wordpressdb.conf':
     command => '/usr/local/bin/dir_clean -f /usr/local/config/dir_clean.wordpressdb.conf >> /var/log/dir_clean.wordpressdb.log 2>&1',
     user    => 'root',
-    hour    => 4,
+    hour    => 2,
     minute  => 0,
   }
 
-  $wp_tarfile = "wordpress-$wpversion.tar.gz"
-  exec {"download-$wp_tarfile":
-    command => "/usr/bin/curl http://aws.naecl.co.uk/public/build/dsl/$wp_tarfile > /usr/local/buildfiles/$wp_tarfile",
+  exec {"download-wordpress-$wpversion.tar.gz":
+    command => "/usr/bin/wget http://aws.naecl.co.uk/public/build/dsl/wordpress-$wpversion.tar.gz",
     creates => "/usr/local/buildfiles/wordpress-$wpversion.tar.gz",
+    cwd     => '/usr/local/buildfiles',
   } ->
 
-  file {"/usr/local/buildfiles/$wp_tarfile":
+  file {"/usr/local/buildfiles/wordpress-$wpversion.tar.gz":
     owner => 'root',
   } ->
 
   exec {'create-usr-share-wordpress':
-    command => "/bin/tar zxf /usr/local/buildfiles/$wp_tarfile",
+    command => "/bin/tar zxf /usr/local/buildfiles/wordpress-$wpversion.tar.gz",
     cwd     => '/usr/share',
     creates => '/usr/share/wordpress',
   } ->
@@ -183,7 +216,7 @@ class wordpress::config (
 
   file {'/etc/httpd/logs':
     ensure => link,
-    target => '/var/log/httpd',
+    target => '../../var/log/httpd',
   } ->
 
   service {'httpd':
@@ -220,14 +253,6 @@ class wordpress::config (
     owner   => 'root',
     group   => 'root',
     mode    => '0750',
-  }
-
-  file {"/usr/local/buildfiles/local.com.png":
-    ensure  => present,
-    owner   => 'root',
-    group   => 'root',
-    mode    => '0750',
-    source  => "puppet:///modules/wordpress/local.com.png",
   }
 
   create_resources(createWebsite, $sites)

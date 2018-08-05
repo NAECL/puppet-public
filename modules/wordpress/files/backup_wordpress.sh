@@ -26,7 +26,7 @@ siteBackup=${backupDir}/${site}.${dayStamp}.gz
 listedIncrementalFile=${backupDir}/${site}.${weekStamp}.snar
 
 cd /var/www
-date '+%Y%m%d %H:%M:%S Starting Site Backup'
+date '+%Y%m%d %H:%M:%S Starting Site Backup to ${siteBackup}'
 tar -zc --listed-incremental=${listedIncrementalFile} -f ${siteBackup} ${site}
 if [ $? -ne 0 ]
 then
@@ -34,7 +34,7 @@ then
     exit 1
 fi
 
-date '+%Y%m%d %H:%M:%S Starting DB Backup'
+date '+%Y%m%d %H:%M:%S Starting DB Backup to ${dbBackup}'
 mysqldump ${dbName} | gzip -c > ${dbBackup}
 if [ $? -ne 0 ]
 then
@@ -43,13 +43,13 @@ then
 fi
 
 date '+%Y%m%d %H:%M:%S Starting AWS Sync'
-aws --region ${bucketRegion} s3 sync ${backupDir} s3://mys3bucket.backups/wordpress/${ENVIRONMENT}/${site}/ >/dev/null 2>&1
+aws --region ${bucketRegion} s3 sync ${backupDir} s3://naecl.co.uk.backups/wordpress/${ENVIRONMENT}/${site}/ >/dev/null 2>&1
 if [ $? -ne 0 ]
 then
     date '+%Y%m%d %H:%M:%S Transfer to AWS Failed'
     exit 1
 else
-    date '+%Y%m%d %H:%M:%S Finished Backups'
+    date '+%Y%m%d %H:%M:%S Transfer to AWS OK - Finished Backups'
 fi
 echo -e "\n\n"
 
