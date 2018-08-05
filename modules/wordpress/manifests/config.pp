@@ -65,7 +65,7 @@ define createWebsite (
     owner   => 'root',
     group   => 'root',
     mode    => '0750',
-    source  => "puppet:///modules/wordpress/$sitename.png",
+    source  => [ "puppet:///modules/wordpress/$sitename.png", "puppet:///modules/wordpress/www.local.com.png" ]
   }
 }
 
