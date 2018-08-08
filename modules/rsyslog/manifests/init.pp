@@ -33,7 +33,7 @@ class rsyslog (
       owner  => 'root',
       group  => 'root',
       mode   => '0640',
-      source => "puppet:///modules/rsyslog/${servername}-cert.pem",
+      source => [ "puppet:///modules/rsyslog/${servername}-cert.pem", 'puppet:///modules/rsyslog/default-cert.pem' ]
     } ->
 
     file {"/etc/pki/rsyslog/${servername}-key.pem":
@@ -41,7 +41,7 @@ class rsyslog (
       owner  => 'root',
       group  => 'root',
       mode   => '0640',
-      source => "puppet:///modules/rsyslog/${servername}-key.pem",
+      source => [ "puppet:///modules/rsyslog/${servername}-key.pem", 'puppet:///modules/rsyslog/default-key.pem' ]
     } ->
 
     file {'/etc/rsyslog.conf':
