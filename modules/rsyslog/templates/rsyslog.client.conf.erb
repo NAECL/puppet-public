@@ -22,8 +22,8 @@ $DefaultNetstreamDriver gtls
 
 # certificate files
 $DefaultNetstreamDriverCAFile /etc/pki/rsyslog/ca.pem
-$DefaultNetstreamDriverCertFile /etc/pki/rsyslog/<%= scope['base::servername'] %>-cert.pem
-$DefaultNetstreamDriverKeyFile /etc/pki/rsyslog/<%= scope['base::servername'] %>-key.pem
+$DefaultNetstreamDriverCertFile /etc/pki/rsyslog/sender-cert.pem
+$DefaultNetstreamDriverKeyFile /etc/pki/rsyslog/sender-key.pem
 
 $InputTCPServerStreamDriverAuthMode x509/name
 $InputTCPServerStreamDriverPermittedPeer *.<%= scope['base::domain'] %>

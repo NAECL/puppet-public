@@ -28,27 +28,49 @@ class rsyslog (
       source => 'puppet:///modules/rsyslog/ca.pem',
     } ->
 
-    file {"/etc/pki/rsyslog/${servername}-cert.pem":
-      ensure => present,
-      owner  => 'root',
-      group  => 'root',
-      mode   => '0640',
-      source => [ "puppet:///modules/rsyslog/${servername}-cert.pem", 'puppet:///modules/rsyslog/default-cert.pem' ]
-    } ->
-
-    file {"/etc/pki/rsyslog/${servername}-key.pem":
-      ensure => present,
-      owner  => 'root',
-      group  => 'root',
-      mode   => '0640',
-      source => [ "puppet:///modules/rsyslog/${servername}-key.pem", 'puppet:///modules/rsyslog/default-key.pem' ]
-    } ->
-
     file {'/etc/rsyslog.conf':
       owner   => 'root',
       group   => 'root',
       mode    => '0644',
       content => template("rsyslog/rsyslog.${role}.conf.erb"),
       notify  => Service['rsyslog'],
+    }
+
+    if ( ${role} == 'client' ) {
+        file {"/etc/pki/rsyslog/sender-cert.pem":
+        ensure => present,
+        owner  => 'root',
+        group  => 'root',
+        mode   => '0640',
+        notify => Service['rsyslog'],
+        source => [ 'puppet:///modules/rsyslog/sender-cert.pem' ]
+        }
+
+        file {"/etc/pki/rsyslog/sender-key.pem":
+        ensure => present,
+        owner  => 'root',
+        group  => 'root',
+        mode   => '0640',
+        notify => Service['rsyslog'],
+        source => [ 'puppet:///modules/rsyslog/sender-key.pem' ]
+        }
+    } else {
+        file {"/etc/pki/rsyslog/collector-cert.pem":
+        ensure => present,
+        owner  => 'root',
+        group  => 'root',
+        mode   => '0640',
+        notify => Service['rsyslog'],
+        source => [ 'puppet:///modules/rsyslog/collector-cert.pem' ]
+        }
+
+        file {"/etc/pki/rsyslog/collector-key.pem":
+        ensure => present,
+        owner  => 'root',
+        group  => 'root',
+        mode   => '0640',
+        notify => Service['rsyslog'],
+        source => [ 'puppet:///modules/rsyslog/collector-key.pem' ]
+        }
     }
 }
