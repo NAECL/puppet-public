@@ -36,8 +36,8 @@ class rsyslog (
       notify  => Service['rsyslog'],
     }
 
-    if ( ${role} == 'client' ) {
-        file {"/etc/pki/rsyslog/sender-cert.pem":
+    if ( $role == 'client' ) {
+        file {'/etc/pki/rsyslog/sender-cert.pem':
         ensure => present,
         owner  => 'root',
         group  => 'root',
@@ -46,7 +46,7 @@ class rsyslog (
         source => [ 'puppet:///modules/rsyslog/sender-cert.pem' ]
         }
 
-        file {"/etc/pki/rsyslog/sender-key.pem":
+        file {'/etc/pki/rsyslog/sender-key.pem':
         ensure => present,
         owner  => 'root',
         group  => 'root',
@@ -55,7 +55,7 @@ class rsyslog (
         source => [ 'puppet:///modules/rsyslog/sender-key.pem' ]
         }
     } else {
-        file {"/etc/pki/rsyslog/collector-cert.pem":
+        file {'/etc/pki/rsyslog/collector-cert.pem':
         ensure => present,
         owner  => 'root',
         group  => 'root',
@@ -64,7 +64,7 @@ class rsyslog (
         source => [ 'puppet:///modules/rsyslog/collector-cert.pem' ]
         }
 
-        file {"/etc/pki/rsyslog/collector-key.pem":
+        file {'/etc/pki/rsyslog/collector-key.pem':
         ensure => present,
         owner  => 'root',
         group  => 'root',
