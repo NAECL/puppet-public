@@ -1,11 +1,11 @@
 ---
 
-base::servername:   'wordpress'
+base::servername:   'wordpress-dev'
 
 rsyslog::role:      'client'
 
 wordpress::config::sites:
   site1:
-    sitename: 'wordpressdev.aws.naecl.com'
+    sitename: 'wordpress-dev.aws.naecl.com'
     dbname:   'wordpressdev'
 
