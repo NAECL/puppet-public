@@ -1,9 +1,7 @@
 ---
 
-base::servername:   'wordpressdev'
-base::domain:       'aws.naecl.com'
+base::servername:   'wordpress'
 
-rsyslog::collector: 'sandbox2-int.aws.naecl.com'
 rsyslog::role:      'client'
 
 wordpress::config::sites:
