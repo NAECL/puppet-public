@@ -1,0 +1,7 @@
+---
+
+chef::username:  'isalt'
+chef::firstname: 'Ian'
+chef::lastname:  'Salt'
+chef::email:     'public@naecl.com'
+
