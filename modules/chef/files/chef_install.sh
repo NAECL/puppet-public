@@ -2,6 +2,8 @@
 
 export PATH=/usr/local/sbin:/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/bin
 
+exec > /var/log/chef_install.log 2>&1
+
 # This is just a rough and ready list of commands to get things started. Not putting too much effort
 # Into creating a puppet build for a chef server, doesn't make much sense
 # Based on https://docs.chef.io/install_server.html
