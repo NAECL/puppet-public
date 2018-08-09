@@ -15,7 +15,7 @@ class chef::install (
             owner => 'root',
         } ->
 
-        exec {'install-chef':
+        exec {'install_chef_rpm':
             command => "/usr/bin/yum install -y /usr/local/buildfiles/${chef_rpm}",
             creates => '/opt/opscode/embedded/cookbooks',
         } ->
@@ -27,8 +27,8 @@ class chef::install (
             source => 'puppet:///modules/chef/chef_install.sh',
         } ->
 
-        exec {'Chef-first_install':
-            command => '/usr/local/buildfiles/first_install.sh',
+        exec {'chef_install':
+            command => '/usr/local/buildfiles/chef_install.sh',
             creates => '/usr/local/puppetbuild/locks/chef_install.lck',
             timeout => '0',
         }
