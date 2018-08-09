@@ -4,7 +4,7 @@ class base (
   $domain           = 'local',
   $hostname         = 'hostname',
 ) {
-  if ( ! defined $hostname ) {
+  if ( $hostname == undef ) {
     $servername = $::custom_hostname
   } else {
     $servername = $hostname
