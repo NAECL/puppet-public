@@ -2,8 +2,6 @@ class rsyslog (
     $role      = 'none',
     $collector = 'localhost',
 ) {
-    $servername = $base::servername
-
     service {'rsyslog':
         enable => true,
         ensure => running,
