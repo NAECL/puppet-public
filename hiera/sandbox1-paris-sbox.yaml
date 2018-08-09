@@ -1,6 +1,6 @@
 ---
 
-rsyslog::role:      'server'
+rsyslog::role:      'collector'
 
 wordpress::config::sites:
   site1:
