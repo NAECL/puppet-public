@@ -1,13 +1,6 @@
 class chef::install (
   $version   = '12.17.33-1',
 ) {
-    $username  = $chef::username
-    $firstname = $chef::firstname
-    $lastname  = $chef::lastname
-    $password  = $chef::password
-    $orgname   = $chef::orgname
-    $email     = $chef::email
-
     if ( $::osfamily == 'redhat' ) {
         $osver = $::operatingsystemmajrelease
         $chef_rpm = "chef-server-core-${version}.el${osver}.x86_64.rpm"
