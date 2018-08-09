@@ -10,6 +10,16 @@ $ModLoad imklog   # provides kernel logging support (previously done by rklogd)
 #$ModLoad immark  # provides --MARK-- message capability
 
 <%- if @role == 'collector' -%>
+# make gtls driver the default
+$DefaultNetstreamDriver gtls
+<%- end -%>
+
+# certificate files
+$DefaultNetstreamDriverCAFile /etc/pki/rsyslog/ca.pem
+<%- if @role == 'collector' -%>
+$DefaultNetstreamDriverCertFile /etc/pki/rsyslog/collector-cert.pem
+$DefaultNetstreamDriverKeyFile /etc/pki/rsyslog/collector-key.pem
+
 # Provides UDP syslog reception
 $ModLoad imudp
 $UDPServerRun 514
@@ -17,26 +27,15 @@ $UDPServerRun 514
 # Provides TCP syslog reception
 $ModLoad imtcp
 $InputTCPServerRun 10514
-<%- end -%>
-
-# make gtls driver the default
-$DefaultNetstreamDriver gtls
-
-# certificate files
-$DefaultNetstreamDriverCAFile /etc/pki/rsyslog/ca.pem
-<% if @role == 'client' -%>
-$DefaultNetstreamDriverCertFile /etc/pki/rsyslog/sender-cert.pem
-$DefaultNetstreamDriverKeyFile /etc/pki/rsyslog/sender-key.pem
-<% else -%>
-$DefaultNetstreamDriverCertFile /etc/pki/rsyslog/collector-cert.pem
-$DefaultNetstreamDriverKeyFile /etc/pki/rsyslog/collector-key.pem
-<% end -%>
 
 $InputTCPServerStreamDriverAuthMode x509/name
 $InputTCPServerStreamDriverPermittedPeer *.<%= scope['base::domain'] %>
 $InputTCPServerStreamDriverMode 1 # run driver in TLS-only mode
-
 # End OF TCP syslog reception
+<% else -%>
+$DefaultNetstreamDriverCertFile /etc/pki/rsyslog/sender-cert.pem
+$DefaultNetstreamDriverKeyFile /etc/pki/rsyslog/sender-key.pem
+<%- end -%>
 
 #### GLOBAL DIRECTIVES ####
 
