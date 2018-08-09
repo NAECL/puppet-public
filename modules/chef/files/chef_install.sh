@@ -9,7 +9,7 @@ if [ $? -ne 0 ]
 then
 	exit 1
 fi
-/bin/chef-server-ctl user-create isalt 'Ian Salt' chef@naecl.com 'PASSWORD' --filename FILE_NAME
+/bin/chef-server-ctl user-create isalt Ian Salt chef@naecl.com 'PASSWORD' --filename FILE_NAME
 if [ $? -ne 0 ]
 then
 	exit 1
