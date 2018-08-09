@@ -20,7 +20,7 @@ if [ $? -ne 0 ]
 then
 	exit 1
 fi
-chef-server-ctl org-create ${orgshortname} ${orglongname} --association_user ${username} --filename ORGANIZATION-validator.pem
+chef-server-ctl org-create ${orgshortname} "${orglongname}" --association_user ${username} --filename ORGANIZATION-validator.pem
 if [ $? -ne 0 ]
 then
 	exit 1
