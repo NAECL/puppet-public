@@ -1,0 +1,9 @@
+---
+
+rsyslog::role:      'server'
+
+wordpress::config::sites:
+  site1:
+    sitename: 'sandbox1.dev.aws.naecl.com'
+    dbname:   'sandbox1_wp'
+

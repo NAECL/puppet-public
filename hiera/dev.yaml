@@ -1,0 +1,5 @@
+---
+
+base::domain:       'aws.naecl.com'
+rsyslog::collector: 'sandbox1-int.aws.naecl.com'
+
