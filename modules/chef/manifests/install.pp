@@ -1,5 +1,11 @@
 class chef::install (
-  $version = '12.17.33-1',
+  $version   = '12.17.33-1',
+  $username  = '',
+  $firstname = '',
+  $lastname  = '',
+  $password  = '',
+  $orgname   = '',
+  $email     = '',
 ) {
     if ( $::osfamily == 'redhat' ) {
         $osver = $::operatingsystemmajrelease
@@ -18,6 +24,13 @@ class chef::install (
         exec {'install_chef_rpm':
             command => "/usr/bin/yum install -y /usr/local/buildfiles/${chef_rpm}",
             creates => '/opt/opscode/embedded/cookbooks',
+        } ->
+
+        file {'/etc/chef_install.cfg':
+            owner   => 'root',
+            group   => 'root',
+            mode    => '0640',
+            content => template('chef/chef_install.cfg.erb')
         } ->
 
         file {'/usr/local/buildfiles/chef_install.sh':
