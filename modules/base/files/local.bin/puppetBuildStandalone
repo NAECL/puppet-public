@@ -10,7 +10,7 @@ else
 fi
 
 download=0
-roleOptions="base wordpress docker jenkins"
+roleOptions="base chef docker jenkins wordpress"
 progname=$(basename $0)
 USAGE="
 ${progname}: [-h] [-e <environment>] [-n] [-v <version>] [-N]
@@ -60,11 +60,13 @@ fi
 case $ROLE in
 	"base")         role="include role::base"
                     ;;
-	"wordpress")    role="include role::wordpress_build"
+	"chef")         role="include role::chef_build"
+                    ;;
+	"docker")       role="include role::docker_build"
                     ;;
 	"jenkins")      role="include role::jenkins_build"
                     ;;
-	"docker")       role="include role::docker_build"
+	"wordpress")    role="include role::wordpress_build"
                     ;;
 	*)              echo "Error: Role ${OPTARG} not supported"
                     exit 1
