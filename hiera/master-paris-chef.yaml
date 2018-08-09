@@ -1,7 +1,9 @@
 ---
 
-chef::username:  'isalt'
 chef::firstname: 'Ian'
 chef::lastname:  'Salt'
+chef::username:  'isalt'
+chef::password:  'PASSWORD'
+chef::orgname:   'naecl'
 chef::email:     'public@naecl.com'
 
