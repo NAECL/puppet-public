@@ -2,8 +2,13 @@
 class base (
   $role             = 'base',
   $domain           = 'local',
-  $servername       = 'hostname',
+  $hostname         = 'hostname',
 ) {
+  if ( ! defined $hostname ) {
+    $servername = $::custom_hostname
+  } else {
+    $servername = $hostname
+  }
 
   # classes that require ordering
   class {'base::config': } ->
