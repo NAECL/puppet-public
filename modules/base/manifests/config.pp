@@ -112,13 +112,13 @@ class base::config (
     mode => '0755',
   }
 
-  # file {'/etc/motd':
-    # ensure   => present,
-    # owner    => root,
-    # group    => root,
-    # mode     => '0644',
-    # content  => template('base/motd.erb'),
-  # }
+  file {'/etc/motd':
+    ensure   => present,
+    owner    => root,
+    group    => root,
+    mode     => '0644',
+    content  => template('base/motd.erb'),
+  }
 
   if ( $aws_server == 'true' ) {
     file {'/etc/cloud/cloud.cfg.d/99_hostname.cfg':
