@@ -1,20 +1,23 @@
 class chef::install (
-  version = 'undef',
+  $version = '12.17.33-1',
 ) {
-  if ${
-  exec {'download-chef-rpm':
-    command => "/usr/bin/wget http://aws.naecl.co.uk/public/build/dsl/wordpress-$wordpress_version.tar.gz",
-    creates => "/usr/local/buildfiles/wordpress-$wordpress_version.tar.gz",
-    cwd     => '/usr/local/buildfiles',
-  } ->
+    if ( $::osfamily == 'redhat' ) {
+        $osver = $::operatingsystemmajrelease
+        $chef_rpm = "chef-server-core-${version}.el${osver}.x86_64.rpm"
 
-  file {"/usr/local/buildfiles/wordpress-$wordpress_version.tar.gz":
-    owner => 'root',
-  } ->
+        exec {'download-chef-rpm':
+            command => "/usr/bin/wget http://aws.naecl.co.uk/public/build/dsl/${chef_rpm}",
+            creates => "/usr/local/buildfiles/${chef_rpm}",
+            cwd     => '/usr/local/buildfiles',
+        } ->
 
-  exec {'create-usr-share-wordpress':
-    command => "/bin/tar zxf /usr/local/buildfiles/wordpress-$wordpress_version.tar.gz",
-    cwd     => '/usr/share',
-    creates => '/usr/share/wordpress',
-  } ->
+        file {"/usr/local/buildfiles/${chef_rpm}":
+            owner => 'root',
+        } ->
+
+        exec {'install-chef':
+            command => "/usr/bin/yum install -y /usr/local/buildfiles/${chef_rpm}",
+            creates => '/opt/opscode/embedded/cookbooks',
+        }
+    }
 }

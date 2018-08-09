@@ -1,4 +1,4 @@
 class chef {
-  class {'jenkins::install': } ->
-  class {'jenkins::config': }
+  class {'chef::install': } ->
+  class {'chef::config': }
 }
