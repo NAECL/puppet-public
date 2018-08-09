@@ -3,7 +3,8 @@ class chef (
   $firstname,
   $lastname,
   $password,
-  $orgname,
+  $orgshortname,
+  $orglongname,
   $email,
 ) {
   class {'chef::install': } ->

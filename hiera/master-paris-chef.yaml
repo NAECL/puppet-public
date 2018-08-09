@@ -1,9 +1,10 @@
 ---
 
-chef::firstname: 'Ian'
-chef::lastname:  'Salt'
-chef::username:  'isalt'
-chef::password:  'PASSWORD'
-chef::orgname:   'naecl'
-chef::email:     'public@naecl.com'
+chef::orgshortname: 'naecl'
+chef::orglongname:  'NAEC Ltd.'
+chef::firstname:    'Ian'
+chef::lastname:     'Salt'
+chef::username:     'isalt'
+chef::password:     'PASSWORD'
+chef::email:        'public@naecl.com'
 
