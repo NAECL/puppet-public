@@ -1,35 +1,37 @@
 #!/bin/bash -x
 
+export PATH=/usr/local/sbin:/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/bin
+
 # This is just a rough and ready list of commands to get things started. Not putting too much effort
 # Into creating a puppet build for a chef server, doesn't make much sense
 # Based on https://docs.chef.io/install_server.html
 #
-/bin/chef-server-ctl reconfigure
+chef-server-ctl reconfigure
 if [ $? -ne 0 ]
 then
 	exit 1
 fi
-/bin/chef-server-ctl user-create isalt Ian Salt chef@naecl.com 'PASSWORD' --filename FILE_NAME
+chef-server-ctl user-create isalt Ian Salt chef@naecl.com 'PASSWORD' --filename FILE_NAME
 if [ $? -ne 0 ]
 then
 	exit 1
 fi
-/bin/chef-server-ctl org-create short_name 'naecl' --association_user isalt --filename ORGANIZATION-validator.pem
+chef-server-ctl org-create short_name 'naecl' --association_user isalt --filename ORGANIZATION-validator.pem
 if [ $? -ne 0 ]
 then
 	exit 1
 fi
-/bin/chef-server-ctl install chef-manage
+chef-server-ctl install chef-manage
 if [ $? -ne 0 ]
 then
 	exit 1
 fi
-/bin/chef-server-ctl reconfigure
+chef-server-ctl reconfigure
 if [ $? -ne 0 ]
 then
 	exit 1
 fi
-/bin/chef-manage-ctl reconfigure --accept-license
+chef-manage-ctl reconfigure --accept-license
 if [ $? -ne 0 ]
 then
 	exit 1
