@@ -1,7 +1,8 @@
 class packages {
     package {[
-        'wget',
         'bind-utils',
+        'telnet',
+        'wget',
     ]:
         ensure => present,
     }
