@@ -2,7 +2,7 @@
 class base (
   $role             = 'base',
   $domain           = 'local',
-  $hostname         = 'hostname',
+  $hostname         = undef,
 ) {
   if ( $hostname == undef ) {
     $servername = $::custom_hostname
