@@ -45,6 +45,10 @@ role=$(/usr/bin/aws --region ${region} ec2 describe-instances --instance-id ${in
 environment=$(/usr/bin/aws --region ${region} ec2 describe-instances --instance-id ${instance}  --query 'Reservations[*].Instances[*].[InstanceId,ImageId,Tags[*]]' --output text | awk '/^Environment/ {print $2}')
 hostname=$(/usr/bin/aws --region ${region} ec2 describe-instances --instance-id ${instance}  --query 'Reservations[*].Instances[*].[InstanceId,ImageId,Tags[*]]' --output text | awk '/^Name/ {print $2}')
 
+# Set Hostname
+sed -i '/^HOSTNAME=/d' /etc/build_custom_config >/dev/null 2>&1
+echo "HOSTNAME=${hostname}" >> /etc/build_custom_config
+
 if [ ! -d ${puppet_root}/git/${puppet_repo} ]
 then
     cd ${puppet_root}/git
