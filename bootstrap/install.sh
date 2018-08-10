@@ -1,15 +1,18 @@
-#!/bin/bash -u
+#!/bin/bash -ux
 
 PATH=/usr/local/sbin:/sbin:/bin:/usr/sbin:/usr/bin
 
 # Set default installer, environment, and repositories these can be modified by a tag
 #
-DEFAULT_ANSIBLE_REPO=ansible-public
-DEFAULT_PUPPET_REPO=puppet-public
-DEFAULT_CHEF_REPO=chef-public
-DEFAULT_ENVIRONMENT=production
-DEFAULT_INSTALLER=puppet
-DEFAULT_GIT_URL=https://github.com/NAECL
+DEFAULT_ANSIBLE_REPO=${ANSIBLE_REPO:=ansible-public}
+DEFAULT_PUPPET_REPO=${PUPPET_REPO:=puppet-public}
+DEFAULT_CHEF_REPO=${CHEF_REPO:=chef-public}
+DEFAULT_ENVIRONMENT=${ENVIRONMENT:=production}
+DEFAULT_INSTALLER=${INSTALLER:=puppet}
+DEFAULT_GIT_URL=${GIT_URL:=https://github.com/NAECL}
+DEFAULT_GIT_SUFFIX=${GIT_SUFFIX:=.git}
+AWS_INSTALL=${AWS_INSTALL:=true}
+REBOOT=${REBOOT:=true}
 
 # Install initial needed packages and tools
 #
@@ -18,29 +21,42 @@ distro=$(lsb_release -i | awk '{print $3}')
 release=$(lsb_release -r | awk '{print $2}' | sed 's/\..*//')
 yum install -y http://dl.fedoraproject.org/pub/epel/epel-release-latest-${release}.noarch.rpm
 
-if [ "${distro}" == "CentOS" -o "${distro}" == "RedHatEnterpriseServer" ]
-then
-    yum install python-pip -y
-    pip install awscli --upgrade
-fi
-
 # Now interrogate the tags and metadata to find ot about this ami
 #
-instance=$(curl http://169.254.169.254/latest/meta-data/instance-id/ 2>/dev/null)
-zone=$(curl http://169.254.169.254/latest/meta-data/placement/availability-zone/ 2>/dev/null)
-region=$(echo ${zone} | sed 's/.$//')
+if [ "${AWS_INSTALL}" = "true" ]
+then
+    if [ "${distro}" == "CentOS" -o "${distro}" == "RedHatEnterpriseServer" ]
+    then
+        yum install python-pip -y
+        pip install awscli --upgrade
+    fi
 
-role=$(/usr/bin/aws --region ${region} ec2 describe-instances --instance-id ${instance}  --query 'Reservations[*].Instances[*].[InstanceId,ImageId,Tags[*]]' --output text | awk '/^Role/ {print $2}')
+    instance=$(curl http://169.254.169.254/latest/meta-data/instance-id/ 2>/dev/null)
+    zone=$(curl http://169.254.169.254/latest/meta-data/placement/availability-zone/ 2>/dev/null)
+    region=$(echo ${zone} | sed 's/.$//')
 
-environment=$(/usr/bin/aws --region ${region} ec2 describe-instances --instance-id ${instance}  --query 'Reservations[*].Instances[*].[InstanceId,ImageId,Tags[*]]' --output text | awk '/^Environment/ {print $2}')
+    role=$(/usr/bin/aws --region ${region} ec2 describe-instances --instance-id ${instance}  --query 'Reservations[*].Instances[*].[InstanceId,ImageId,Tags[*]]' --output text | awk '/^Role/ {print $2}')
 
-hostname=$(/usr/bin/aws --region ${region} ec2 describe-instances --instance-id ${instance}  --query 'Reservations[*].Instances[*].[InstanceId,ImageId,Tags[*]]' --output text | awk '/^Name/ {print $2}')
+    environment=$(/usr/bin/aws --region ${region} ec2 describe-instances --instance-id ${instance}  --query 'Reservations[*].Instances[*].[InstanceId,ImageId,Tags[*]]' --output text | awk '/^Environment/ {print $2}')
 
-installer=$(/usr/bin/aws --region ${region} ec2 describe-instances --instance-id ${instance}  --query 'Reservations[*].Instances[*].[InstanceId,ImageId,Tags[*]]' --output text | awk '/^Installer/ {print $2}')
+    hostname=$(/usr/bin/aws --region ${region} ec2 describe-instances --instance-id ${instance}  --query 'Reservations[*].Instances[*].[InstanceId,ImageId,Tags[*]]' --output text | awk '/^Name/ {print $2}')
 
-repository=$(/usr/bin/aws --region ${region} ec2 describe-instances --instance-id ${instance}  --query 'Reservations[*].Instances[*].[InstanceId,ImageId,Tags[*]]' --output text | awk '/^Repository/ {print $2}')
+    installer=$(/usr/bin/aws --region ${region} ec2 describe-instances --instance-id ${instance}  --query 'Reservations[*].Instances[*].[InstanceId,ImageId,Tags[*]]' --output text | awk '/^Installer/ {print $2}')
 
-git_url=$(/usr/bin/aws --region ${region} ec2 describe-instances --instance-id ${instance}  --query 'Reservations[*].Instances[*].[InstanceId,ImageId,Tags[*]]' --output text | awk '/^Git_Url/ {print $2}')
+    repository=$(/usr/bin/aws --region ${region} ec2 describe-instances --instance-id ${instance}  --query 'Reservations[*].Instances[*].[InstanceId,ImageId,Tags[*]]' --output text | awk '/^Repository/ {print $2}')
+
+    git_url=$(/usr/bin/aws --region ${region} ec2 describe-instances --instance-id ${instance}  --query 'Reservations[*].Instances[*].[InstanceId,ImageId,Tags[*]]' --output text | awk '/^Git_Url/ {print $2}')
+
+    git_suffix=$(/usr/bin/aws --region ${region} ec2 describe-instances --instance-id ${instance}  --query 'Reservations[*].Instances[*].[InstanceId,ImageId,Tags[*]]' --output text | awk '/^Git_Suffix/ {print $2}')
+else
+    role=${ROLE:=base}
+    hostname=${HOSTNAME:=hostname}
+    environment=""
+    installer=""
+    repository=""
+    git_url=""
+    git_suffix=""
+fi
 
 # If installer isn't specified, use default
 #
@@ -61,6 +77,20 @@ fi
 if [ "${git_url}" = "" ]
 then
     git_url=${DEFAULT_GIT_URL}
+fi
+
+# If git_suffix isn't specified, use default
+#
+if [ "${git_suffix}" = "" ]
+then
+    # Naff workaround to exporting an empty class
+    #
+    if [ "${DEFAULT_GIT_SUFFIX}" = "null" ]
+    then
+        git_suffix=""
+    else
+        git_suffix=${DEFAULT_GIT_SUFFIX}
+    fi
 fi
 
 case ${installer} in
@@ -86,7 +116,6 @@ fi
 git_dir=/etc/git
 yum install -y git
 mkdir -p ${git_dir}
-
 
 # Now do installer mechanism specific stuff
 #
@@ -128,7 +157,7 @@ then
     if [ ! -d ${git_dir}/${repository} ]
     then
         cd ${git_dir}
-        git clone ${git_url}/${repository}.git
+        git clone ${git_url}/${repository}${git_suffix}
         ln -sf ${git_dir}/${repository}/hiera/hiera.yaml ${puppet_root}/hiera.yaml
         ln -sf ${git_dir}/${repository}/hiera/common.yaml ${puppet_root}/hieradata/common.yaml
         ln -sf ${git_dir}/${repository}/hiera/${environment}.yaml ${puppet_root}/hieradata/environment.yaml
@@ -147,7 +176,7 @@ then
     if [ ! -d ${git_dir}/${repository} ]
     then
         cd ${git_dir}
-        git clone ${git_url}/${repository}.git
+        git clone ${git_url}/${repository}${git_suffix}
         yum install -y http://aws.naecl.co.uk/public/build/dsl/chefdk-3.1.0-1.el7.x86_64.rpm
     else
         cd ${git_dir}/${repository}
@@ -160,11 +189,14 @@ then
     if [ ! -d ${git_dir}/${repository} ]
     then
         cd ${git_dir}
-        git clone ${git_url}/${repository}.git
+        git clone ${git_url}/${repository}${git_suffix}
     else
         cd ${git_dir}/${repository}
         git pull
     fi
 fi
 
-init 6
+if [ "${REBOOT}" = "true" ]
+then
+    init 6
+fi
