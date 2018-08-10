@@ -4,9 +4,9 @@ PATH=/usr/local/sbin:/sbin:/bin:/usr/sbin:/usr/bin
 
 # Set default installer, environment, and repositories these can be modified by a tag
 #
-DEFAULT_ANSIBLE_REPO=ansible
+DEFAULT_ANSIBLE_REPO=ansible-public
 DEFAULT_PUPPET_REPO=puppet-public
-DEFAULT_CHEF_REPO=chef
+DEFAULT_CHEF_REPO=chef-public
 DEFAULT_ENVIRONMENT=production
 DEFAULT_INSTALLER=puppet
 
@@ -130,14 +130,14 @@ fi
 if [ "${installer}" = "chef" ]
 then
     cd ${git_dir}
-    git clone ssh://git-codecommit.eu-west-1.amazonaws.com/v1/repos/${repository}
+    git clone https://github.com/NAECL/${repository}.git
     yum install -y http://aws.naecl.co.uk/public/build/dsl/chefdk-3.1.0-1.el7.x86_64.rpm
 fi
 
 if [ "${installer}" = "ansible" ]
 then
     cd ${git_dir}
-    git clone ssh://git-codecommit.eu-west-1.amazonaws.com/v1/repos/${ansible}
+    git clone https://github.com/NAECL/${repository}.git
 fi
 
 init 6
