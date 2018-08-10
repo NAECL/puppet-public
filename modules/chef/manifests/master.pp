@@ -1,4 +1,4 @@
-class chef::install (
+class chef::master (
   $version   = '12.17.33-1',
 ) {
     if ( $::osfamily == 'redhat' ) {

@@ -6,7 +6,11 @@ class chef (
   $orgshortname,
   $orglongname,
   $email,
+  $role = 'client',
 ) {
-  class {'chef::install': } ->
-  class {'chef::config': }
+  if ( $role == 'client' ) {
+    class {'chef::client': }
+  } else {
+    class {'chef::master': }
+  }
 }

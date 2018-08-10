@@ -7,4 +7,5 @@ chef::lastname:     'Salt'
 chef::username:     'isalt'
 chef::password:     'PASSWORD'
 chef::email:        'public@naecl.com'
+chef::role:         'master'
 
