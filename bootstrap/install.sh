@@ -9,6 +9,7 @@ DEFAULT_PUPPET_REPO=puppet-public
 DEFAULT_CHEF_REPO=chef-public
 DEFAULT_ENVIRONMENT=production
 DEFAULT_INSTALLER=puppet
+DEFAULT_GIT_URL=https://github.com/NAECL
 
 # Install initial needed packages and tools
 #
@@ -28,11 +29,18 @@ fi
 instance=$(curl http://169.254.169.254/latest/meta-data/instance-id/ 2>/dev/null)
 zone=$(curl http://169.254.169.254/latest/meta-data/placement/availability-zone/ 2>/dev/null)
 region=$(echo ${zone} | sed 's/.$//')
+
 role=$(/usr/bin/aws --region ${region} ec2 describe-instances --instance-id ${instance}  --query 'Reservations[*].Instances[*].[InstanceId,ImageId,Tags[*]]' --output text | awk '/^Role/ {print $2}')
+
 environment=$(/usr/bin/aws --region ${region} ec2 describe-instances --instance-id ${instance}  --query 'Reservations[*].Instances[*].[InstanceId,ImageId,Tags[*]]' --output text | awk '/^Environment/ {print $2}')
+
 hostname=$(/usr/bin/aws --region ${region} ec2 describe-instances --instance-id ${instance}  --query 'Reservations[*].Instances[*].[InstanceId,ImageId,Tags[*]]' --output text | awk '/^Name/ {print $2}')
+
 installer=$(/usr/bin/aws --region ${region} ec2 describe-instances --instance-id ${instance}  --query 'Reservations[*].Instances[*].[InstanceId,ImageId,Tags[*]]' --output text | awk '/^Installer/ {print $2}')
+
 repository=$(/usr/bin/aws --region ${region} ec2 describe-instances --instance-id ${instance}  --query 'Reservations[*].Instances[*].[InstanceId,ImageId,Tags[*]]' --output text | awk '/^Repository/ {print $2}')
+
+git_url=$(/usr/bin/aws --region ${region} ec2 describe-instances --instance-id ${instance}  --query 'Reservations[*].Instances[*].[InstanceId,ImageId,Tags[*]]' --output text | awk '/^Git_Url/ {print $2}')
 
 # If installer isn't specified, use default
 #
@@ -46,6 +54,13 @@ fi
 if [ "${environment}" = "" ]
 then
     environment=${DEFAULT_ENVIRONMENT}
+fi
+
+# If git_url isn't specified, use default
+#
+if [ "${git_url}" = "" ]
+then
+    git_url=${DEFAULT_GIT_URL}
 fi
 
 case ${installer} in
@@ -113,7 +128,7 @@ then
     if [ ! -d ${git_dir}/${repository} ]
     then
         cd ${git_dir}
-        git clone https://github.com/NAECL/${repository}.git
+        git clone ${git_url}/${repository}.git
         ln -sf ${git_dir}/${repository}/hiera/hiera.yaml ${puppet_root}/hiera.yaml
         ln -sf ${git_dir}/${repository}/hiera/common.yaml ${puppet_root}/hieradata/common.yaml
         ln -sf ${git_dir}/${repository}/hiera/${environment}.yaml ${puppet_root}/hieradata/environment.yaml
@@ -129,15 +144,27 @@ fi
 
 if [ "${installer}" = "chef" ]
 then
-    cd ${git_dir}
-    git clone https://github.com/NAECL/${repository}.git
-    yum install -y http://aws.naecl.co.uk/public/build/dsl/chefdk-3.1.0-1.el7.x86_64.rpm
+    if [ ! -d ${git_dir}/${repository} ]
+    then
+        cd ${git_dir}
+        git clone ${git_url}/${repository}.git
+        yum install -y http://aws.naecl.co.uk/public/build/dsl/chefdk-3.1.0-1.el7.x86_64.rpm
+    else
+        cd ${git_dir}/${repository}
+        git pull
+    fi
 fi
 
 if [ "${installer}" = "ansible" ]
 then
-    cd ${git_dir}
-    git clone https://github.com/NAECL/${repository}.git
+    if [ ! -d ${git_dir}/${repository} ]
+    then
+        cd ${git_dir}
+        git clone ${git_url}/${repository}.git
+    else
+        cd ${git_dir}/${repository}
+        git pull
+    fi
 fi
 
 init 6
