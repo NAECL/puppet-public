@@ -6,11 +6,6 @@ class chef (
   $orgshortname,
   $orglongname,
   $email,
-  $role = 'client',
 ) {
-  if ( $role == 'client' ) {
-    class {'chef::client': }
-  } else {
-    class {'chef::master': }
-  }
+  class {'chef::master': }
 }

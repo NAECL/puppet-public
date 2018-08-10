@@ -105,4 +105,9 @@ then
     /usr/local/bin/puppetBuildStandalone -r ${role}
 fi
 
+if [ "${installer}" = "chef" ]
+then
+    yum install http://aws.naecl.co.uk/public/build/dsl/chefdk-3.1.0-1.el7.x86_64.rpm
+fi
+
 init 6
