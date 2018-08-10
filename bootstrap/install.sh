@@ -131,7 +131,7 @@ if [ "${installer}" = "chef" ]
 then
     cd ${git_dir}
     git clone ssh://git-codecommit.eu-west-1.amazonaws.com/v1/repos/${repository}
-    yum install http://aws.naecl.co.uk/public/build/dsl/chefdk-3.1.0-1.el7.x86_64.rpm
+    yum install -y http://aws.naecl.co.uk/public/build/dsl/chefdk-3.1.0-1.el7.x86_64.rpm
 fi
 
 if [ "${installer}" = "ansible" ]
