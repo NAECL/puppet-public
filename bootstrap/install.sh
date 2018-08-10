@@ -1,11 +1,14 @@
-#!/bin/bash
+#!/bin/bash -u
 
 PATH=/usr/local/sbin:/sbin:/bin:/usr/sbin:/usr/bin
 
-# Set default installer and environment these can be modified by a tag
+# Set default installer, environment, and repositories these can be modified by a tag
 #
-INSTALLER=puppet
-ENVIRONMENT=production
+DEFAULT_ANSIBLE_REPO=ansible
+DEFAULT_PUPPET_REPO=puppet-public
+DEFAULT_CHEF_REPO=chef
+DEFAULT_ENVIRONMENT=production
+DEFAULT_INSTALLER=puppet
 
 # Install initial needed packages and tools
 #
@@ -29,22 +32,42 @@ role=$(/usr/bin/aws --region ${region} ec2 describe-instances --instance-id ${in
 environment=$(/usr/bin/aws --region ${region} ec2 describe-instances --instance-id ${instance}  --query 'Reservations[*].Instances[*].[InstanceId,ImageId,Tags[*]]' --output text | awk '/^Environment/ {print $2}')
 hostname=$(/usr/bin/aws --region ${region} ec2 describe-instances --instance-id ${instance}  --query 'Reservations[*].Instances[*].[InstanceId,ImageId,Tags[*]]' --output text | awk '/^Name/ {print $2}')
 installer=$(/usr/bin/aws --region ${region} ec2 describe-instances --instance-id ${instance}  --query 'Reservations[*].Instances[*].[InstanceId,ImageId,Tags[*]]' --output text | awk '/^Installer/ {print $2}')
+repository=$(/usr/bin/aws --region ${region} ec2 describe-instances --instance-id ${instance}  --query 'Reservations[*].Instances[*].[InstanceId,ImageId,Tags[*]]' --output text | awk '/^Repository/ {print $2}')
 
 # If installer isn't specified, use default
 #
 if [ "${installer}" = "" ]
 then
-    installer=${INSTALLER}
+    installer=${DEFAULT_INSTALLER}
 fi
 
 # If environment isn't specified, use default
 #
 if [ "${environment}" = "" ]
 then
-    environment=${ENVIRONMENT}
+    environment=${DEFAULT_ENVIRONMENT}
 fi
 
-# Prepare GIT
+case ${installer} in
+    puppet)     REPOSITORY=${DEFAULT_PUPPET_REPO}
+                ;;
+    chef)       REPOSITORY=${DEFAULT_CHEF_REPO}
+                ;;
+    ansible)    REPOSITORY=${DEFAULT_ANSIBLE_REPO}
+                ;;
+    *)          echo "Error Invalid Installer Specified"
+                exit 1
+                ;;
+esac
+
+# If repository isn't specified, use default
+#
+if [ "${repository}" = "" ]
+then
+    repository=${REPOSITORY}
+fi
+
+# Prepare git
 git_dir=/etc/git
 yum install -y git
 mkdir -p ${git_dir}
@@ -54,7 +77,6 @@ mkdir -p ${git_dir}
 #
 if [ "${installer}" = "puppet" ]
 then
-    puppet_repo=puppet-public
 
     # Set Hostname and Environment for later use by custom facts
     #
@@ -85,19 +107,19 @@ then
     if [ ! -L ${module_dir} ]
     then
         rm -rf ${module_dir}
-        ln -sf ${git_dir}/${puppet_repo}/modules ${module_dir}
+        ln -sf ${git_dir}/${repository}/modules ${module_dir}
     fi
 
-    if [ ! -d ${git_dir}/${puppet_repo} ]
+    if [ ! -d ${git_dir}/${repository} ]
     then
         cd ${git_dir}
-        git clone https://github.com/NAECL/${puppet_repo}.git
-        ln -sf ${git_dir}/${puppet_repo}/hiera/hiera.yaml ${puppet_root}/hiera.yaml
-        ln -sf ${git_dir}/${puppet_repo}/hiera/common.yaml ${puppet_root}/hieradata/common.yaml
-        ln -sf ${git_dir}/${puppet_repo}/hiera/${environment}.yaml ${puppet_root}/hieradata/environment.yaml
-        ln -sf ${git_dir}/${puppet_repo}/hiera/${hostname}.yaml ${puppet_root}/hieradata/hostname.yaml
+        git clone https://github.com/NAECL/${repository}.git
+        ln -sf ${git_dir}/${repository}/hiera/hiera.yaml ${puppet_root}/hiera.yaml
+        ln -sf ${git_dir}/${repository}/hiera/common.yaml ${puppet_root}/hieradata/common.yaml
+        ln -sf ${git_dir}/${repository}/hiera/${environment}.yaml ${puppet_root}/hieradata/environment.yaml
+        ln -sf ${git_dir}/${repository}/hiera/${hostname}.yaml ${puppet_root}/hieradata/hostname.yaml
     else
-        cd ${git_dir}/${puppet_repo}
+        cd ${git_dir}/${repository}
         git pull
     fi
 
@@ -107,7 +129,15 @@ fi
 
 if [ "${installer}" = "chef" ]
 then
+    cd ${git_dir}
+    git clone ssh://git-codecommit.eu-west-1.amazonaws.com/v1/repos/${repository}
     yum install http://aws.naecl.co.uk/public/build/dsl/chefdk-3.1.0-1.el7.x86_64.rpm
+fi
+
+if [ "${installer}" = "ansible" ]
+then
+    cd ${git_dir}
+    git clone ssh://git-codecommit.eu-west-1.amazonaws.com/v1/repos/${ansible}
 fi
 
 init 6
