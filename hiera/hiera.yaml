@@ -6,9 +6,11 @@ defaults:
   data_hash: yaml_data
 
 :hierarchy:
-    - name: "Hostname Yaml"
+    - name: "Hostname Specific"
       path: "hostname.yaml"
-    - name: "Environment Yaml"
+    - name: "Environment Specific"
       path: "environment.yaml"
-    - name: "Common To Everything"
-      path: "common.yaml"
+    - name: "Region Specific"
+      path: "region.yaml"
+    - name: "Global"
+      path: "global.yaml"

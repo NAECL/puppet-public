@@ -1,0 +1,8 @@
+---
+
+base::domain:       'aws.naecl.com'
+
+ntp::servers:
+  - '0.amazon.pool.ntp.org'
+  - '1.amazon.pool.ntp.org'
+
