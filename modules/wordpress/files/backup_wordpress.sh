@@ -5,7 +5,7 @@ export EC2_HOME=/opt/aws/apitools/ec2
 export PATH=/usr/local/sbin:/sbin:/bin:/usr/sbin:/usr/bin:/opt/aws/bin:/root/bin
 export HOME=/root
 
-. /etc/build_custom_config
+. /etc/naecl_custom_config
 
 if [ $# -ne 2 ]
 then
@@ -22,11 +22,11 @@ bucketRegion=eu-west-2
 backupDir=/var/lib/siteBackups/${site}
 mkdir -p ${backupDir}
 dbBackup=${backupDir}/${dbName}.${dayStamp}.sql.gz
-siteBackup=${backupDir}/${site}.${dayStamp}.gz
+siteBackup=${backupDir}/${site}.${dayStamp}.tar.gz
 listedIncrementalFile=${backupDir}/${site}.${weekStamp}.snar
 
 cd /var/www
-date '+%Y%m%d %H:%M:%S Starting Site Backup to ${siteBackup}'
+date "+%Y%m%d %H:%M:%S Starting Site Backup to ${siteBackup}"
 tar -zc --listed-incremental=${listedIncrementalFile} -f ${siteBackup} ${site}
 if [ $? -ne 0 ]
 then
@@ -34,7 +34,7 @@ then
     exit 1
 fi
 
-date '+%Y%m%d %H:%M:%S Starting DB Backup to ${dbBackup}'
+date "+%Y%m%d %H:%M:%S Starting DB Backup to ${dbBackup}"
 mysqldump ${dbName} | gzip -c > ${dbBackup}
 if [ $? -ne 0 ]
 then
