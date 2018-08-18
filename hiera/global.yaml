@@ -1,4 +1,5 @@
 ---
+# Global yaml config file
 
 base::domain:       'aws.naecl.com'
 

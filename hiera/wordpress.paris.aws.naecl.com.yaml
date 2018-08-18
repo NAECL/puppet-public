@@ -1,4 +1,5 @@
 ---
+# Yaml config file for wordpress.paris.aws.naecl.com server specific settings
 
 wordpress::config::sites:
   site1:
