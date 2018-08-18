@@ -1,0 +1,9 @@
+---
+
+rsyslog::role:      'client'
+
+wordpress::config::sites:
+  site1:
+    sitename: 'anne_test.aws.naecl.com'
+    dbname:   'anne_test'
+
