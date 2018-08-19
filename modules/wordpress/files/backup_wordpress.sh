@@ -7,10 +7,10 @@ export HOME=/root
 
 . /etc/build_custom_config
 
-if [ "${BACKUP_BUCKET}" = "" ]
+if [ "${BACKUP_BUCKET}" = "ignore" ]
 then
-    echo "Error: BACKUP_BUCKET Not defined!"
-    exit 1
+    echo "Info: BACKUP_BUCKET Set to ignore"
+    exit k
 fi
 
 if [ "${ENVIRONMENT}" = "" ]

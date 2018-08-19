@@ -72,6 +72,7 @@ define createWebsite (
 class wordpress::config (
   $sites          = [],
   $install_opsweb = undef,
+  $backup_bucket  = 'ignore',
 ) {
 
   $wordpress_version = $wordpress::wordpress_version
@@ -253,6 +254,12 @@ class wordpress::config (
     owner   => 'root',
     group   => 'root',
     mode    => '0750',
+  }
+
+  file_line {'backup_bucket_/etc/build_custom_config':
+    path   => '/etc/build_custom_config',
+    line   => "BACKUP_BUCKET=${wordpress::config::backup_bucket}",
+    match  => '^BACKUP_BUCKET=',
   }
 
   create_resources(createWebsite, $sites)
