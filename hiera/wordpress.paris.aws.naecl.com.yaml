@@ -1,6 +1,8 @@
 ---
 # Yaml config file for wordpress.paris.aws.naecl.com server specific settings
 
+wordpress::config::backup_bucket: 'naecl.co.uk.backups'
+
 wordpress::config::sites:
   site1:
     sitename: 'anne.paris.aws.naecl.com'
