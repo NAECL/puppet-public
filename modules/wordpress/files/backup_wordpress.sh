@@ -10,7 +10,7 @@ export HOME=/root
 if [ "${BACKUP_BUCKET}" = "ignore" ]
 then
     echo "Info: BACKUP_BUCKET Set to ignore"
-    exit k
+    exit 0
 fi
 
 if [ "${ENVIRONMENT}" = "" ]
