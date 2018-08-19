@@ -5,7 +5,13 @@ export EC2_HOME=/opt/aws/apitools/ec2
 export PATH=/usr/local/sbin:/sbin:/bin:/usr/sbin:/usr/bin:/opt/aws/bin:/root/bin
 export HOME=/root
 
-. /etc/naecl_custom_config
+. /etc/build_custom_config
+
+if [ "${BACKUP_BUCKET}" = "" ]
+then
+    echo "Error: BACKUP_BUCKET Not defined!"
+    exit 1
+fi
 
 if [ $# -ne 2 ]
 then
@@ -43,7 +49,7 @@ then
 fi
 
 date '+%Y%m%d %H:%M:%S Starting AWS Sync'
-aws --region ${bucketRegion} s3 sync ${backupDir} s3://naecl.co.uk.backups/wordpress/${ENVIRONMENT}/${site}/ >/dev/null 2>&1
+aws --region ${bucketRegion} s3 sync ${backupDir} s3://${BACKUP_BUCKET}/wordpress/${ENVIRONMENT}/${site}/ >/dev/null 2>&1
 if [ $? -ne 0 ]
 then
     date '+%Y%m%d %H:%M:%S Transfer to AWS Failed'
