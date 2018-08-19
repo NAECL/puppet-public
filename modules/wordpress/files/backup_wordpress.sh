@@ -13,6 +13,12 @@ then
     exit 1
 fi
 
+if [ "${ENVIRONMENT}" = "" ]
+then
+    echo "Error: ENVIRONMENT Not defined!"
+    exit 1
+fi
+
 if [ $# -ne 2 ]
 then
 	echo "Error: Needs Site and DB Name as an argument"
