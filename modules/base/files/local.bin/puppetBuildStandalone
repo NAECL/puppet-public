@@ -10,7 +10,7 @@ else
 fi
 
 download=0
-roleOptions="base chef docker jenkins wordpress"
+roleOptions="base chef docker jenkins wordpress mailhub"
 progname=$(basename $0)
 USAGE="
 ${progname}: [-h] [-e <environment>] [-n] [-v <version>] [-N]
@@ -65,6 +65,8 @@ case $ROLE in
 	"docker")       role="include role::docker_build"
                     ;;
 	"jenkins")      role="include role::jenkins_build"
+                    ;;
+	"mailhub")      role="include role::mailhub_build"
                     ;;
 	"wordpress")    role="include role::wordpress_build"
                     ;;
