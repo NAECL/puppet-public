@@ -58,7 +58,7 @@ then
 fi
 
 case $ROLE in
-	"base")         role="include role::base"
+	"base")         role="include role::base_build"
                     ;;
 	"chef")         role="include role::chef_build"
                     ;;
