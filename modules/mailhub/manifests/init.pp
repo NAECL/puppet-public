@@ -1,6 +1,6 @@
 class mailhub (
-  $relay,
-  $mailgroup  = '5000')
+  $relay      = '',
+  $mailgroup  = '5000',
   $mailuser   = '5000',
 ) {
 
