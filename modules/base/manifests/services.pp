@@ -2,16 +2,23 @@ class base::services (
   $firewall_enable = 'false',
   $firewall_state  = 'stopped',
 ) {
+  if ( $::osfamily == 'redhat' ) {
+    $cron_service = 'crond'
 
-  service {'crond':
-    ensure => running,
-    enable => true,
+    if ( $::operatingsystemmajrelease == '6' ) {
+      service { 'iptables':
+        enable => $firewall_enable,
+        ensure => $firewall_state,
+      }
+    }
   }
 
-  if ( $::operatingsystemmajrelease == '6' ) {
-    service { 'iptables':
-      enable => $firewall_enable,
-      ensure => $firewall_state,
-    }
+  if ( $::osfamily == 'Debian' ) {
+    $cron_service = 'cron'
+  }
+
+  service {"${cron_service}":
+    ensure => running,
+    enable => true,
   }
 }
