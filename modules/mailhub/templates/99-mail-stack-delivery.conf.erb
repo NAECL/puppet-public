@@ -17,7 +17,7 @@ protocol imap {
 
 # LDA configuration
 protocol lda {
-        postmaster_address = postmaster@<%= scope['base::params::domain'] %>
+        postmaster_address = postmaster@<%= scope['base::domain'] %>
         mail_plugins = sieve
         quota_full_tempfail = yes
         deliver_log_format = msgid=%m: %$
@@ -47,7 +47,7 @@ passdb {
  
 userdb {
     driver = static
-    args = uid=<%= scope['mailhub::params::mailuser'] %> gid=<%= scope['mailhub::params::mailgroup'] %> home=/var/mail/vmail/%d/%n
+    args = uid=<%= scope['mailhub::mailuser'] %> gid=<%= scope['mailhub::mailgroup'] %> home=/var/mail/vmail/%d/%n
 }
 
 # Log all failed authentication attempts
