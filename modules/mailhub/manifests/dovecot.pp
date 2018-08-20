@@ -2,14 +2,14 @@ class mailhub::dovecot {
 
   group {'vmail':
     ensure => present,
-    gid    => "$mailhub::params::mailgroup",
+    gid    => "$mailhub::mailgroup",
   } ->
   user { 'vmail':
     ensure  => 'present',
     comment => 'Mailbox User',
     home    => '/var/mail/vmail',
     gid     => 'vmail',
-    uid     => "$mailhub::params::mailuser",
+    uid     => "$mailhub::mailuser",
     shell   => '/bin/rbash',
   } ->
   file {'/var/mail/vmail':
