@@ -1,6 +1,9 @@
-class mailhub {
+class mailhub (
+  $relay,
+  $mailgroup  = '5000')
+  $mailuser   = '5000',
+) {
 
-  class {'mailhub::params': } ->
   class {'mailhub::packages': } ->
   class {'mailhub::postfix': } ->
   class {'mailhub::dovecot': } ->
