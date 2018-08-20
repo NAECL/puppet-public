@@ -77,10 +77,10 @@ distro=$(lsb_release -i | awk '{print $3}')
 module_dir=/etc/puppetlabs/code/environments/${environment}/modules
 
 case ${distro} in
-    "CentOS"|"RedHatEnterpriseServer")  puppet=/opt/puppetlabs/bin/puppet
+    CentOS|RedHatEnterpriseServer)      puppet=/opt/puppetlabs/bin/puppet
                                         module_dir=/etc/puppetlabs/puppet/code/environments/${environment}/modules
                                         ;;
-    "AmazonAMI|Ubuntu")                 puppet=/usr/bin/puppet
+    AmazonAMI|Ubuntu)                   puppet=/usr/bin/puppet
                                         module_dir=/etc/puppet/environments/${environment}/modules
                                         ;;
     "*")                                echo "Error: Distribution ${distro} not supported"
