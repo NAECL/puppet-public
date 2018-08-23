@@ -85,14 +85,6 @@ class wordpress::config (
     source  => 'puppet:///modules/wordpress/php.ini',
   }
 
-  file {'/usr/local/bin/renew_certs.sh':
-    ensure  => present,
-    owner   => 'root',
-    group   => 'root',
-    mode    => '0750',
-    source  => 'puppet:///modules/wordpress/renew_certs.sh',
-  }
-
   file {'/usr/local/bin/watermark_websites.sh':
     ensure  => present,
     owner   => 'root',
