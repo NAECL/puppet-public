@@ -1,6 +1,6 @@
 #!/bin/bash
 
-export PATH=/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin
+export PATH=/bin:/sbin:/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin
 logfile=/var/log/package_update.log.$(date '+%m')
 reboot=false
 
@@ -22,7 +22,7 @@ then
     fi
 else
     /usr/bin/apt-get update >> ${logfile} 2>&1
-    /usr/bin/apt-get upgrade  >> ${logfile} 2>&1
+    /usr/bin/apt-get upgrade -y >> ${logfile} 2>&1
     # need some logic to test if reboot is required, for now reboot always
     if [ "${REBOOT_AFTER_UPDATE}" == "true" ]
     then
