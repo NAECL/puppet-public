@@ -96,7 +96,7 @@ if [ ${download} -eq 1 ]
 then
 	cd ${module_dir}
 	git pull
-	cd /etc/puppet/config
+	cd /etc/git/config
 	git pull
 fi
 
