@@ -96,6 +96,8 @@ if [ ${download} -eq 1 ]
 then
 	cd ${module_dir}
 	git pull
+	cd /etc/puppet/config
+	git pull
 fi
 
 ${puppet} apply -t ${noop} --modulepath=${module_dir} -e "${role}"
