@@ -1,5 +1,0 @@
----
-# Yaml config file for paris region specific settings
-
-base::domain:       'paris.caramelsalty.com'
-

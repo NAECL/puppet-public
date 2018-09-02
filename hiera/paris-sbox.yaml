@@ -1,5 +1,0 @@
----
-
-base::domain:       'aws.naecl.com'
-rsyslog::collector: 'rsyslog-paris-sbox.aws.naecl.com'
-
