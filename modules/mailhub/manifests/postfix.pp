@@ -80,4 +80,5 @@ class mailhub::postfix {
     refreshonly => true,
     notify  => Service['postfix'],
   }
+
 }

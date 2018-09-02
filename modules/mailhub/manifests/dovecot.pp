@@ -23,7 +23,7 @@ class mailhub::dovecot {
     owner   => 'root',
     group   => 'root',
     mode    => '0644',
-    source  => 'puppet:///modules/mailhub/dovecot.passwd.db',
+    content => template('mailhub/dovecot.passwd.db.erb'),
     notify  => Service['dovecot'],
   }
 
