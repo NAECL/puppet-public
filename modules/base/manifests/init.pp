@@ -1,8 +1,8 @@
 # This module contains the default configuration common to all servers.
 class base (
-  $role             = 'base',
-  $domain           = 'local',
-  $hostname         = undef,
+  $role     = 'base',
+  $domain   = 'local',
+  $hostname = undef,
 ) {
   if ( $hostname == undef ) {
     $servername = $::custom_hostname
