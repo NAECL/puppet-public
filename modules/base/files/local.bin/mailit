@@ -1,0 +1,286 @@
+#!/usr/bin/perl
+############################################################################
+#
+# Name:         mailit
+#
+# Author:       Ian Salt
+#
+# Date:         1st September 2000
+#
+# Description:  A command-line driven program to send emails via smtp,
+#		either as plain text or in MIME format
+#
+# Usage:        mailit
+#
+# Copyright (C) 2000 Ian Salt (Contact email: gpl@naecl.co.uk)
+# 
+# This program is free software; you can redistribute it and/or modify it
+# under the terms
+# of the # GNU General Public License as published by the Free Software
+# Foundation; either
+# version 2 of the License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY;
+# without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+# PARTICULAR PURPOSE.
+# See the GNU General Public License for more details. 
+#
+# You should have received a copy of the GNU General Public License along
+# with this program;
+# if not, write to Free Software Foundation, Inc., 675 Mass Ave, Cambridge,
+# MA 02139, USA.
+#
+############################################################################
+#
+use MIME::Base64;
+use MIME::Entity;
+use Net::SMTP;
+use Getopt::Std;
+use POSIX qw(strftime);
+use Time::Local;
+use strict;
+
+my $Usage="Usage: mailit [-h] -r recipient -a <attach file> | -f|-F <insert file> -s subject [-g SMTP Gateway Host] [-o Originator Email Id] [-V]\n\n\t-r\tSMTP Recipient\n\n\t-o\tSMTP Originator\n\n\t-g\tSMTP Gateway\n\n\t-s\tSubject\n\n\t-a\tFile to attach (MIME Encoded)\n\n\t-f\tFile to insert as text in body\n\t\t(On Unix this is checked before insert. If it is not text it is attached)\n\n\t-F\tForce file to be inserted as text body with no checking\n\n";
+
+# Options are
+#
+# -a	Filename
+#
+# -f	Filename
+#
+# -u	Username
+#
+# -h	Help
+#
+# -s	Subject
+#
+if (! getopts ('a:f:F:g:ho:r:s:V')) {
+        print "\nError: $Usage";
+        exit 1;
+}
+
+if ( $Getopt::Std::opt_h ) {
+	print "\n$Usage";
+	exit 0;
+}
+
+if ( $Getopt::Std::opt_V ) {
+        my $prog_version;
+        my $prog_file;
+        my $prog_date;
+        my $prog_author;
+        my $rcs_info=0;
+        # Work out revision and print it
+        open (SOURCE, "<$0") or die;
+        while (<SOURCE>) {
+                chomp;
+                if ( /^# .Revision/ ) {
+                        $prog_version=$_;
+                        $prog_version =~ s/^# .Revision: //;
+                        $prog_version =~ s/ \$//;
+                }
+                if ( /^# .RCSfile/ ) {
+                        $prog_file=$_;
+                        $prog_file =~ s/^# .RCSfile: //;
+                        $prog_file =~ s/,v \$//;
+                        $rcs_info=1;
+                }
+                if ( /^# .Date:/ ) {
+                        $prog_date=$_;
+                        $prog_date =~ s/^# .Date: //;
+                        $prog_date =~ s/ \$//;
+                }
+                if ( /^# Author:/ ) {
+                        $prog_author=$_;
+                        $prog_author =~ s/^# Author:\s*//;
+                        $prog_author =~ s/ \$//;
+                }
+        }
+        if ( $rcs_info ) {
+                print "\n$prog_file version $prog_version, written by ${prog_author}, last changed $prog_date\n\n";
+        } else {
+                print "\nNo Version Information Available\n\n";
+        }
+        exit 0;
+}
+
+unless ( $Getopt::Std::opt_s && $Getopt::Std::opt_r ) {
+	print "\nError: $Usage";
+	exit 1;
+}
+
+if ( $Getopt::Std::opt_a && $Getopt::Std::opt_f ) {
+	print "\nError: $Usage";
+	exit 1;
+}
+
+# If we have $opt_a set then we attach the file whatever, otherwise if
+# $opt_f then we Check for data type, if the file is ascii then we send as
+# inline data, else we attach it
+# One thing a file type of text on its own is not good enough. We look for
+# ascii text or program text or perl script or shell script
+# We also look character special as special case when sending /dev/null
+#
+
+# Set data=1, This means we attach the file using mime
+my $data=1;
+my $pipe_in=0;
+my $input_file;
+my $infile;
+
+# Now see if we make an exception because opt_f is set and we have a text
+# file or because we are reading in from a pipe (But only on Unix). On NT
+# Assume that everything is text. If -F is set do no checking whatever the
+# platform
+#
+
+if ( $Getopt::Std::opt_F ) {
+	$input_file=$Getopt::Std::opt_F;
+	$data=0;
+} elsif ( $Getopt::Std::opt_f ) {
+	$input_file=$Getopt::Std::opt_f;
+	if ($^O ne "MSWin32") {
+		$_=`file $Getopt::Std::opt_f`;
+		s/^\S+:\s+//;
+		if ( /text/i || /ascii/i || /script/i || /character special/i || /perl/i ) {
+			$data=0;
+		}
+	} else {
+		$data=0;
+	}
+} else {
+	$input_file=$Getopt::Std::opt_a;
+}
+
+# If we have neither opt_a or opt_f we are reading from a pipe
+#
+if ( ! $Getopt::Std::opt_a && ! $Getopt::Std::opt_f && ! $Getopt::Std::opt_F ) {
+	$pipe_in=1;
+	$data=0;
+} else {
+	$infile="<${input_file}";
+}
+
+# Initialise configurable variables.
+#
+my $global_config_file="/usr/operations/config/global.cfg";
+my $email_gateway="opsmail.mgtsvcs.net";
+
+# Work out the date
+my $time=time();
+
+# Then we use it to pass to strftime
+#
+my $message_date=strftime("%a %b %e %T %Z %Y", localtime($time));
+
+# If a config file entry exists for the variables, overwrite them
+#
+if ( -r $global_config_file ) {
+	open (CONFIG, "<$global_config_file") or die "failed to open $global_config_file\n";
+	while (<CONFIG>) {
+		chomp;
+		if ( /^EMAIL_GATEWAY/ ) {
+			$email_gateway=$_;
+			$email_gateway =~ s/^EMAIL_GATEWAY\s*//;
+		}
+	}
+}
+
+# if an option is specified, over-ride the configurable variables
+#
+
+if ( $Getopt::Std::opt_g ) {
+	$email_gateway = $Getopt::Std::opt_g;
+}
+
+# Sort out To and From Address
+my $to = $Getopt::Std::opt_r;
+my $subject=$Getopt::Std::opt_s;
+my $from;
+my @to = split /,/,$to;
+$to="";
+foreach (@to) {
+	$to=$to.",<$_>";
+}
+$to=~s/^,//;
+
+if ($Getopt::Std::opt_o) {
+	$from=$Getopt::Std::opt_o;
+} else {
+	my $prog_name=$0;
+	# Process Progname for Unix style PATH seperators
+	$prog_name =~ s/.*\///;
+	# Process Progname for NT style PATH seperators
+	$prog_name =~ s/.*\\//;
+	# Find out hostname
+	my $hostname=`/bin/hostname`;
+	# Get rid of any domain bits if included
+	$hostname =~ s/\..*$//;
+	chomp ($hostname);
+	my $domain=`/bin/hostname -d`;
+	chomp ( $domain );
+	$from="${prog_name}\@${hostname}.${domain}";
+}
+
+# Change to intended proper recipient
+my $smtp = Net::SMTP->new($email_gateway, Timeout => 30) or die "Can't connect to $email_gateway";
+
+$smtp->mail($from) or die "mail: @{[$smtp->message]}\n";
+$smtp->to(@to) or die "to: @{[$smtp->message]}\n";
+
+# tell the server that we're going to
+# start sending data
+$smtp->data();
+
+# send data depending upon type if it is of type data we put mime headers in
+# and then convert the file to base64 so that it gets sent as an atachment.
+# We also add the filename so that the UA can have a go at opening the file.
+# Otherwise if its text we just open a data stream
+# create the headers and spit the data down the line.
+#
+if ( $data eq 1 ) {
+	my $message=MIME::Entity->new;
+	$message->build
+	(
+			Type	=>	"multipart/mixed",
+			From	=>	$from,
+			To	=>	$to,
+			Subject	=>	"$Getopt::Std::opt_s",
+			Date	=>	"$message_date"
+	)
+	or die "MIME::Entity->build; $!";
+
+	# Add an attachment
+	$message->attach
+	(
+		Path	=>	"${input_file}",
+		Type	=>	'application/data',
+		Encoding=>	'Base64',
+	);
+
+	$smtp->datasend($message->stringify);
+
+} else {
+	# This file is ascii so we just send a small header and then throw
+        # the
+	# whole file at it
+	if ( ! $pipe_in ) {
+		open (INFILE, ${infile}) or die "Could not open input file ${input_file}\n";
+	}
+	$smtp->datasend(<<ENDOFINPUT2);
+To: $to
+Subject: $subject
+From: $from
+Date: $message_date
+
+ENDOFINPUT2
+	if ( ! $pipe_in ) {
+		$smtp->datasend(<INFILE>);
+	} else {
+		$smtp->datasend(<>);
+	}
+}
+# end data        
+$smtp->dataend;
+$smtp->quit;
