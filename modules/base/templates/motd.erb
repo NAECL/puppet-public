@@ -1,6 +1,6 @@
 
 Hostname            <%= scope['base::servername'] %>.<%= scope['base::domain'] %>
-IP Address          <%= scope['::ipaddress_eth0'] %>
+IP Address          <%= @ip_address %>
 
 Role                <%= scope['base::role'] %>
 <% if  scope['::custom_sub_role'] != 'undef'  -%>
