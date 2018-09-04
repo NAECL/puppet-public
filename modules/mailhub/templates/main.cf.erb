@@ -29,7 +29,7 @@ smtp_tls_session_cache_database = btree:${data_directory}/smtp_scache
 
 smtpd_relay_restrictions = permit_mynetworks permit_sasl_authenticated defer_unauth_destination
 dovecot_destination_recipient_limit = 1
-myhostname = <%= scope['base::params::servername'] %>.<%= scope['base::params::domain'] %>
+myhostname = <%= scope['base::servername'] %>.<%= scope['base::domain'] %>
 alias_maps = hash:/etc/aliases
 alias_database = hash:/etc/aliases
 mydestination = $myhostname, localdomain, localhost, localhost.localdomain, localhost
@@ -38,7 +38,7 @@ virtual_mailbox_base = /var/mail/vmail
 virtual_minimum_uid = 100
 virtual_uid_maps = static:<%= scope['mailhub::mailuser'] %>
 virtual_gid_maps = static:<%= scope['mailhub::mailgroup'] %>
-virtual_mailbox_domains = <%= scope['base::params::domain'] %>
+virtual_mailbox_domains = <%= scope['base::domain'] %>
 virtual_mailbox_maps = hash:/etc/postfix/virtual-mailbox-maps
 virtual_alias_maps = hash:/etc/postfix/virtual-alias-maps
 relayhost = <%= scope['mailhub::relay'] %>

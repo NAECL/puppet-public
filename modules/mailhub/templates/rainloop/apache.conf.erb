@@ -1,4 +1,4 @@
 <VirtualHost *:80>
-  ServerName <%= scope['base::params::servername'] %>.<%= scope['base::params::domain'] %>
-  Redirect / https://<%= scope['base::params::servername'] %>.<%= scope['base::params::domain'] %>/
+  ServerName <%= scope['base::servername'] %>.<%= scope['base::domain'] %>
+  Redirect / https://<%= scope['base::servername'] %>.<%= scope['base::domain'] %>/
 </VirtualHost>

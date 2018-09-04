@@ -1,8 +1,8 @@
 <IfModule mod_ssl.c>
 <VirtualHost *:443>
-  ServerName <%= scope['base::params::servername'] %>.<%= scope['base::params::domain'] %>
+  ServerName <%= scope['base::servername'] %>.<%= scope['base::domain'] %>
   DocumentRoot "/var/www/rainloop/"
-  ServerAdmin admin@<%= scope['base::params::domain'] %>
+  ServerAdmin admin@<%= scope['base::domain'] %>
 
   ErrorLog "/var/log/apache2/rainloop_error_log"
   TransferLog "/var/log/apache2/rainloop_access_log"
@@ -15,8 +15,8 @@
     Require all granted
   </Directory>
 
-  SSLCertificateFile /etc/letsencrypt/live/<%= scope['base::params::servername'] %>.<%= scope['base::params::domain'] %>/fullchain.pem
-  SSLCertificateKeyFile /etc/letsencrypt/live/<%= scope['base::params::servername'] %>.<%= scope['base::params::domain'] %>/privkey.pem
+  SSLCertificateFile /etc/letsencrypt/live/<%= scope['base::servername'] %>.<%= scope['base::domain'] %>/fullchain.pem
+  SSLCertificateKeyFile /etc/letsencrypt/live/<%= scope['base::servername'] %>.<%= scope['base::domain'] %>/privkey.pem
   Include /etc/letsencrypt/options-ssl-apache.conf
 </VirtualHost>
 </IfModule>

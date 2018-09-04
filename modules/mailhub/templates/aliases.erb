@@ -1,11 +1,11 @@
 # See man 5 aliases for format.
-postmaster: postmaster@<%= scope['base::params::domain'] %>
-webmaster:  postmaster@<%= scope['base::params::domain'] %>
-root:       postmaster@<%= scope['base::params::domain'] %>
-www-data:   postmaster@<%= scope['base::params::domain'] %>
-postbot:    postmaster@<%= scope['base::params::domain'] %>
-abuse:      postmaster@<%= scope['base::params::domain'] %>
-hostmaster: postmaster@<%= scope['base::params::domain'] %>
+postmaster: postmaster@<%= scope['base::domain'] %>
+webmaster:  postmaster@<%= scope['base::domain'] %>
+root:       postmaster@<%= scope['base::domain'] %>
+www-data:   postmaster@<%= scope['base::domain'] %>
+postbot:    postmaster@<%= scope['base::domain'] %>
+abuse:      postmaster@<%= scope['base::domain'] %>
+hostmaster: postmaster@<%= scope['base::domain'] %>
 <% if scope['clam::install'] == 'true' -%>
 clamav:     root
 <% end -%>

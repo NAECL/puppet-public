@@ -121,7 +121,7 @@ class mailhub::rainloop {
     creates => '/var/www/rainloop',
   } ->
 
-  file {"/var/www/rainloop/data/_data_/_default_/domains/$base::params::domain.ini":
+  file {"/var/www/rainloop/data/_data_/_default_/domains/$base::domain.ini":
     ensure => present,
     owner  => 'www-data',
     group  => 'www-data',

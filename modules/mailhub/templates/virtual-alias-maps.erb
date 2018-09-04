@@ -1,3 +1,3 @@
 <% scope['mailhub::virtual_aliases'].each do |key| -%>
-<%= key['addr'] %>@<%= scope['base::params::domain'] %>  <%= key['alias'] %>@<%= scope['base::params::domain'] %>
+<%= key['addr'] %>@<%= scope['base::domain'] %>  <%= key['alias'] %>@<%= scope['base::domain'] %>
 <% end -%>
