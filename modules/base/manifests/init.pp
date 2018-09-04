@@ -20,4 +20,5 @@ class base (
   include hosts
   include packages
   include rsyslog
+  include clam
 }
