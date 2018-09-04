@@ -112,7 +112,7 @@ class base::config (
     mode => '0755',
   }
 
-  $ip_address = $facts[networking']['ip']
+  $ip_address = $facts['networking']['ip']
   file {'/etc/motd':
     ensure   => present,
     owner    => root,
