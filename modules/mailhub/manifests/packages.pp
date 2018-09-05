@@ -9,7 +9,7 @@ class mailhub::packages {
       'libmime-tools-perl',
       'python-software-properties',
       'letsencrypt',
-      'python-letsencrypt-apache',
+      # 'python-letsencrypt-apache',
     ]:
     ensure => present,
   }
