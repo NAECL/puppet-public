@@ -21,41 +21,12 @@ class mailhub::rainloop (
     mode    => '0700',
   } ->
 
-  # file {'/etc/letsencrypt/options-ssl-apache.conf':
-    # owner   => 'root',
-    # group   => 'root',
-    # mode    => '0644',
-    # source  => 'puppet:///modules/mailhub/letsencrypt/options-ssl-apache.conf',
-  # } ->
-
-  # file {'/etc/letsencrypt/archive/mail.zoesalt.com':
-    # ensure  => directory,
-    # owner   => 'root',
-    # group   => 'root',
-    # mode    => '0644',
-    # recurse => true,
-    # purge   => true,
-    # force   => true,
-    # source  => 'puppet:///modules/mailhub/letsencrypt/archive/mail.zoesalt.com',
-  # } ->
-
   file {'/etc/letsencrypt/live':
     ensure  => directory,
     owner   => 'root',
     group   => 'root',
     mode    => '0700',
   } ->
-
-  # file {'/etc/letsencrypt/live/mail.zoesalt.com':
-    # ensure  => directory,
-    # owner   => 'root',
-    # group   => 'root',
-    # mode    => '0755',
-    # recurse => true,
-    # purge   => true,
-    # force   => true,
-    # source  => 'puppet:///modules/mailhub/letsencrypt/live/mail.zoesalt.com',
-  # } ->
 
   file {'/etc/apache2/sites-available/rainloop.conf':
     ensure => present,
@@ -99,11 +70,11 @@ class mailhub::rainloop (
     notify => Service['apache2'],
   } ->
 
-  # file {'/etc/apache2/sites-enabled/rainloop-le-ssl.conf':
-    # ensure => link,
-    # target => '/etc/apache2/sites-available/rainloop-le-ssl.conf',
-    # notify => Service['apache2'],
-  # } ->
+  file {'/etc/apache2/sites-enabled/rainloop-le-ssl.conf':
+    ensure => link,
+    target => '/etc/apache2/sites-available/rainloop-le-ssl.conf',
+    notify => Service['apache2'],
+  } ->
 
   file {'/etc/apache2/sites-enabled/000-default.conf':
     ensure => absent,
