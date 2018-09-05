@@ -5,6 +5,7 @@ class mailhub::packages {
       'mailutils',
       'unzip',
       'certbot',
+      'python3-certbot-apache',
       'libemail-mime-perl',
       'libmime-tools-perl',
       'python-software-properties',
