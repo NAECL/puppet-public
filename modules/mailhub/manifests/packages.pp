@@ -4,6 +4,7 @@ class mailhub::packages {
       'mail-stack-delivery',
       'mailutils',
       'unzip',
+      'certbot',
       'libemail-mime-perl',
       'libmime-tools-perl',
       'python-software-properties',
