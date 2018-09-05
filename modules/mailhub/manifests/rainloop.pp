@@ -1,6 +1,6 @@
 class mailhub::rainloop (
   # This url should be set to an internal controlled DSL, but this will work for POC
-  $package_url = https://www.rainloop.net/repository/webmail/rainloop-community-latest.zip,
+  $package_url = 'https://www.rainloop.net/repository/webmail/rainloop-community-latest.zip',
 ) {
 
   package {['apache2','php7.0','libapache2-mod-php7.0','php7.0-curl','php7.0-xml']:
@@ -114,6 +114,11 @@ class mailhub::rainloop (
     command => "/usr/bin/wget -O /usr/local/buildfiles/rainloop.zip $package_url",
     cwd     => '/usr/local/buildfiles',
     creates => '/usr/local/buildfiles/rainloop.zip',
+  } ->
+
+  # Make sure puppet knows about this file, and leaves it alone
+  file {'/usr/local/buildfiles/rainloop.zip':
+    owner => 'root',
   } ->
  
   exec {'unzip_rainloop.zip':
