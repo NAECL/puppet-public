@@ -75,11 +75,11 @@ class mailhub::rainloop (
     notify => Service['apache2'],
   } ->
 
-  # file {'/etc/apache2/sites-enabled/rainloop.conf':
-    # ensure => link,
-    # target => '/etc/apache2/sites-available/rainloop.conf',
-    # notify => Service['apache2'],
-  # } ->
+  file {'/etc/apache2/sites-enabled/rainloop.conf':
+    ensure => link,
+    target => '/etc/apache2/sites-available/rainloop.conf',
+    notify => Service['apache2'],
+  } ->
 
   file {'/etc/apache2/mods-enabled/socache_shmcb.load':
     ensure => link,
