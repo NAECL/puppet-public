@@ -1,7 +1,9 @@
 class mailhub::rainloop (
   # This url should be set to an internal controlled DSL, but this will work for POC
-  $package_url = 'https://www.rainloop.net/repository/webmail/rainloop-community-latest.zip',
+  $package_location = 'https://github.com/RainLoop/rainloop-webmail/releases/download',
+  $package_version  = '1.12.1',
 ) {
+  $package_url = "${package_location}/v${package_version}/rainloop-${package_version}.zip",
 
   package {['apache2','php7.0','libapache2-mod-php7.0','php7.0-curl','php7.0-xml']:
     ensure => present,
@@ -82,20 +84,79 @@ class mailhub::rainloop (
   } ->
 
   exec {'download_rainloop.zip':
-    command => "/usr/bin/wget -O /usr/local/buildfiles/rainloop.zip $package_url",
+    command => "/usr/bin/wget -O /usr/local/buildfiles/rainloop.${package_version}.zip $package_url",
     cwd     => '/usr/local/buildfiles',
-    creates => '/usr/local/buildfiles/rainloop.zip',
+    creates => '/usr/local/buildfiles/rainloop.${package_version}.zip',
   } ->
 
   # Make sure puppet knows about this file, and leaves it alone
-  file {'/usr/local/buildfiles/rainloop.zip':
+  file {'/usr/local/buildfiles/rainloop.${package_version}.zip':
     owner => 'root',
+  } ->
+
+  # Create directory for the new version
+  file {'/var/www/rainloop_${package_version}':
+    ensure => directory,
+    owner  => 'www-data',
+    group  => 'www-data',
+    mode   => '0755',
+  } ->
+
+  # Ensure that rainloop link points to correct place before packags is unzipped
+  file {'/var/www/rainloop':
+    ensure => link,
+    target => "/var/www/rainloop_${package_version}",
   } ->
  
   exec {'unzip_rainloop.zip':
-    command => '/usr/bin/unzip /usr/local/buildfiles/rainloop.zip',
-    cwd     => '/var/www',
-    creates => '/var/www/rainloop',
+    command => '/usr/bin/unzip /usr/local/buildfiles/rainloop.${package_version}.zip',
+    cwd     => '/var/www/rainloop',
+    creates => '/var/www/rainloop/rainloop',
+  } ->
+
+  # Set perms after tar
+  file {'/var/www/rainloop/rainloop':
+    owner   => 'www-data',
+    group   => 'www-data',
+    recurse => true,
+  } ->
+  file {'/var/www/rainloop/index.php':
+    owner   => 'www-data',
+    group   => 'www-data',
+    recurse => true,
+  } ->
+  file {'/var/www/rainloop/data':
+    owner   => 'www-data',
+    group   => 'www-data',
+    recurse => true,
+  } ->
+
+  file {'/var/www/rainloop/data/_data_':
+    ensure => directory,
+    owner  => 'www-data',
+    group  => 'www-data',
+    mode   => '0755',
+  } ->
+
+  file {'/var/www/rainloop/data/_data_/_default_':
+    ensure => directory,
+    owner  => 'www-data',
+    group  => 'www-data',
+    mode   => '0755',
+  } ->
+
+  file {'/var/www/rainloop/data/_data_/_default_/configs':
+    ensure => directory,
+    owner  => 'www-data',
+    group  => 'www-data',
+    mode   => '0755',
+  } ->
+
+  file {'/var/www/rainloop/data/_data_/_default_/domains':
+    ensure => directory,
+    owner  => 'www-data',
+    group  => 'www-data',
+    mode   => '0755',
   } ->
 
   file {"/var/www/rainloop/data/_data_/_default_/domains/$base::domain.ini":
