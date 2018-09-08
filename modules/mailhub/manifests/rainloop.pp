@@ -159,6 +159,13 @@ class mailhub::rainloop (
     owner  => 'www-data',
     group  => 'www-data',
     mode   => '0755',
+    purge  => true,
+  } ->
+
+  file {'/var/www/rainloop/data/_data_/_default_/domains/disabled':
+    owner  => 'www-data',
+    group  => 'www-data',
+    mode   => '0644',
   } ->
 
   file {"/var/www/rainloop/data/_data_/_default_/domains/$base::domain.ini":
