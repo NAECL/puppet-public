@@ -1,3 +1,9 @@
+root@<%= scope['base::domain'] %>  postmaster@<%= scope['base::domain'] %>
+www-data@<%= scope['base::domain'] %>  postmaster@<%= scope['base::domain'] %>
+postbot@<%= scope['base::domain'] %>  postmaster@<%= scope['base::domain'] %>
+abuse@<%= scope['base::domain'] %>  postmaster@<%= scope['base::domain'] %>
+hostmaster@<%= scope['base::domain'] %>  postmaster@<%= scope['base::domain'] %>
+webmaster@<%= scope['base::domain'] %>  postmaster@<%= scope['base::domain'] %>
 <% scope['mailhub::virtual_aliases'].each do |key| -%>
 <%= key['addr'] %>@<%= scope['base::domain'] %>  <%= key['alias'] %>@<%= scope['base::domain'] %>
 <% end -%>
