@@ -3,7 +3,7 @@ class mailhub::rainloop (
   $package_location = 'https://github.com/RainLoop/rainloop-webmail/releases/download',
   $package_version  = '1.12.1',
 ) {
-  $package_url = "${package_location}/v${package_version}/rainloop-${package_version}.zip",
+  $package_url = "${package_location}/v${package_version}/rainloop-${package_version}.zip"
 
   package {['apache2','php7.0','libapache2-mod-php7.0','php7.0-curl','php7.0-xml']:
     ensure => present,
