@@ -155,11 +155,12 @@ class mailhub::rainloop (
   } ->
 
   file {'/var/www/rainloop/data/_data_/_default_/domains':
-    ensure => directory,
-    owner  => 'www-data',
-    group  => 'www-data',
-    mode   => '0755',
-    purge  => true,
+    ensure  => directory,
+    owner   => 'www-data',
+    group   => 'www-data',
+    mode    => '0755',
+    purge   => true,
+    recurse => true,
   } ->
 
   file {'/var/www/rainloop/data/_data_/_default_/domains/disabled':
