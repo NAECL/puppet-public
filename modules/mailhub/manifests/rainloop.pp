@@ -2,6 +2,8 @@ class mailhub::rainloop (
   # This url should be set to an internal controlled DSL, but this will work for POC
   $package_location = 'https://github.com/RainLoop/rainloop-webmail/releases/download',
   $package_version  = '1.12.1',
+  $admin_user       = 'nimda',
+  $admin_password   = 'f4b98cde1a7759eac532ce0ccdfaffea',
 ) {
   $package_url = "${package_location}/v${package_version}/rainloop-${package_version}.zip"
 
