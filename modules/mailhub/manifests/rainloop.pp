@@ -86,16 +86,16 @@ class mailhub::rainloop (
   exec {'download_rainloop.zip':
     command => "/usr/bin/wget -O /usr/local/buildfiles/rainloop.${package_version}.zip $package_url",
     cwd     => '/usr/local/buildfiles',
-    creates => '/usr/local/buildfiles/rainloop.${package_version}.zip',
+    creates => "/usr/local/buildfiles/rainloop.${package_version}.zip",
   } ->
 
   # Make sure puppet knows about this file, and leaves it alone
-  file {'/usr/local/buildfiles/rainloop.${package_version}.zip':
+  file {"/usr/local/buildfiles/rainloop.${package_version}.zip":
     owner => 'root',
   } ->
 
   # Create directory for the new version
-  file {'/var/www/rainloop_${package_version}':
+  file {"/var/www/rainloop_${package_version}":
     ensure => directory,
     owner  => 'www-data',
     group  => 'www-data',
@@ -109,7 +109,7 @@ class mailhub::rainloop (
   } ->
  
   exec {'unzip_rainloop.zip':
-    command => '/usr/bin/unzip /usr/local/buildfiles/rainloop.${package_version}.zip',
+    command => "/usr/bin/unzip /usr/local/buildfiles/rainloop.${package_version}.zip",
     cwd     => '/var/www/rainloop',
     creates => '/var/www/rainloop/rainloop',
   } ->
