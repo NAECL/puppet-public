@@ -185,6 +185,13 @@ class mailhub::rainloop (
     content => template('mailhub/rainloop/application.ini.erb'),
   }
 
+  cron { 'renew_certs':
+    command => '/usr/local/bin/renew_certs.sh > /dev/null 2>&1',
+    user    => 'root',
+    hour    => 1,
+    minute  => 23,
+  }
+
   service {'apache2':
     enable => true,
     ensure => running,
