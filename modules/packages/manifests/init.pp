@@ -12,6 +12,7 @@ class packages {
     if ( $::osfamily == 'redhat' ) {
         package {[
             'bind-utils',
+            'perl-MIME-tools',
         ]:
             ensure => present,
         }
