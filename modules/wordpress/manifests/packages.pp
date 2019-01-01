@@ -5,6 +5,7 @@ class wordpress::packages {
       'php-xml',
       'httpd',
       'stress',
+      'certbot',
       'ImageMagick',
       'php-mysql',
       'vsftpd',

@@ -1,74 +1,3 @@
-define createWebsite (
-  $sitename,
-  $dbname,
-  $sslcert = 'false',
-) {
-  file {"/etc/httpd/conf.d/$sitename.conf":
-    ensure  => present,
-    owner   => 'root',
-    group   => 'root',
-    mode    => '0644',
-    content => template('wordpress/virtual_hosts.conf.erb'),
-    notify  => Service['httpd'],
-  }
-
-  if ($sslcert == 'true') {
-    file {"/etc/httpd/conf.d/$sitename-le-ssl.conf":
-        ensure  => present,
-        owner   => 'root',
-        group   => 'root',
-        mode    => '0644',
-        content => template('wordpress/virtual_hosts.ssl.conf.erb'),
-        notify  => Service['httpd'],
-    }
-  } else {
-    file {"/etc/httpd/conf.d/$sitename-le-ssl.conf":
-        ensure  => absent,
-    }
-  }
-
-  exec {"setup-web-$dbname":
-    command => "/usr/local/buildfiles/create_new_website.sh $sitename",
-    creates => "/usr/local/puppetbuild/locks/$sitename.webcreated.lck",
-    require => File['/usr/share/wordpress/wp-config.php'],
-  } ->
-
-  file {"/var/www/$sitename":
-    ensure  => directory,
-    owner   => 'apache',
-    group   => 'apache',
-    recurse => true,
-  } ->
-
-  file {"/var/www/$sitename/private":
-    ensure  => link,
-    target  => "/var/www/$sitename/static",
-  } ->
-
-  file {"/var/www/$sitename/static":
-    ensure  => directory,
-    owner   => 'apache',
-    group   => 'apache',
-    mode    => '0750',
-    recurse => true,
-    source  => [ "puppet:///modules/wordpress/static/$sitename", "puppet:///modules/wordpress/static/default" ],
-  } ->
-
-  exec {"setup-mysql-$dbname":
-    command => "/usr/local/buildfiles/setup-mysql -n $dbname $sitename",
-    creates => "/usr/local/puppetbuild/locks/$dbname.dbcreated.lck",
-    require => File['/etc/wordpress'],
-  }
-
-  file {"/usr/local/buildfiles/$sitename.png":
-    ensure  => present,
-    owner   => 'root',
-    group   => 'root',
-    mode    => '0750',
-    source  => [ "puppet:///modules/wordpress/$sitename.png", "puppet:///modules/wordpress/www.local.com.png" ]
-  }
-}
-
 class wordpress::config (
   $sites          = [],
   $install_opsweb = undef,
@@ -98,6 +27,12 @@ class wordpress::config (
     user    => 'root',
     hour    => 1,
     minute  => 0,
+  }
+
+  cron { 'restart mariadb service':
+    command => '/usr/local/bin/restart_service.sh mariadb > /dev/null 2>&1',
+    user    => 'root',
+    minute  => '*/3',
   }
 
   cron { 'renew_certs':
@@ -254,5 +189,9 @@ class wordpress::config (
     match  => '^BACKUP_BUCKET=',
   }
 
-  create_resources(createWebsite, $sites)
+  create_resources(wordpress::createwebsite, $sites)
+
+  if ($install_opsweb == 'true') {
+    include opsweb
+  }
 }
