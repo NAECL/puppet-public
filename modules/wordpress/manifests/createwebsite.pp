@@ -61,9 +61,9 @@ define wordpress::createwebsite (
   }
 
   exec {"create_/usr/local/buildfiles/$sitename.png":
-    command => "/usr/local/bin/watermark_websites.sh $sitename 1",
+    command => "/usr/local/bin/createWatermarkFile.sh $sitename 1",
     cwd     => '/usr/local/buildfiles',
     creates => "/usr/local/buildfiles/$sitename.png",
-    require => File['/usr/local/bin/watermark_websites.sh'],
+    require => File['/usr/local/bin/createWatermarkFile.sh'],
   }
 }
