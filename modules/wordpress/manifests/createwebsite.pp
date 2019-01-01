@@ -60,11 +60,10 @@ define wordpress::createwebsite (
     require => File['/etc/wordpress'],
   }
 
-  file {"/usr/local/buildfiles/$sitename.png":
-    ensure  => present,
-    owner   => 'root',
-    group   => 'root',
-    mode    => '0750',
-    source  => "puppet:///modules/wordpress/$sitename.png",
+  exec {"create_/usr/local/buildfiles/$sitename.png":
+    command => "/usr/local/bin/watermark_websites.sh $sitename 1"
+    cwd     => '/usr/local/buildfiles',
+    creates => "/usr/local/buildfiles/$sitename.png",
+    require => File['/usr/local/bin/watermark_websites.sh'],
   }
 }
