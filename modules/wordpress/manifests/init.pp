@@ -1,5 +1,5 @@
 class wordpress (
-  $wordpress_version = '4.9.1',
+  $wordpress_version = '5.0.2',
 ) {
   class {'wordpress::packages': } ->
   class {'wordpress::database': } ->
