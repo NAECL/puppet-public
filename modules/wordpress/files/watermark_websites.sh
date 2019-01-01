@@ -7,8 +7,9 @@ lockdir=/usr/local/puppetbuild/locks
 
 for lockfile in ${lockdir}/*.dbcreated.lck
 do
-	read site db < ${lockfile}
-	date "+%Y%m%d %H:%M:%S Watermarking photos in ${site}"
+    # Read site and db into seperate variables, db is not used
+    read site db < ${lockfile}
+    date "+%Y%m%d %H:%M:%S Watermarking photos in ${site}"
     /usr/local/bin/watermarkSite.sh ${site}
 done
 

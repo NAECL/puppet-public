@@ -18,7 +18,7 @@ then
     exit 1
 fi
 
-temp_image=/tmp/watermarks/temp_image
+temp_image=${temp_dir}/temp_image
 if [ -f ${temp_image} ]
 then
     echo "Error: Previous temp image ${temp_image} still exists"
