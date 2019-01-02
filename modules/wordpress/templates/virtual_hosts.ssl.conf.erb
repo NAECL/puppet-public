@@ -1,0 +1,20 @@
+#
+# To get a cert run 
+#
+# certbot --apache certonly
+#
+# Ensure that you only pick one cert at a time
+#
+<IfModule mod_ssl.c>
+<VirtualHost *:443>
+    ServerAdmin webmaster@naecl.com
+    DocumentRoot /var/www/<%= @sitename %>
+    ServerName <%= @sitename %>
+    ErrorLog /var/log/httpd/<%= @sitename %>-error_log
+    CustomLog /var/log/httpd/<%= @sitename %>-access_log common
+SSLCertificateFile /etc/letsencrypt/live/<%= @sitename %>/cert.pem
+SSLCertificateKeyFile /etc/letsencrypt/live/<%= @sitename %>/privkey.pem
+Include /etc/letsencrypt/options-ssl-apache.conf
+SSLCertificateChainFile /etc/letsencrypt/live/<%= @sitename %>/chain.pem
+</VirtualHost>
+</IfModule>

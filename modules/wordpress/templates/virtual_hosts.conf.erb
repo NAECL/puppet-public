@@ -4,7 +4,7 @@
 </Directory>
 
 <VirtualHost *:80>
-    ServerAdmin webmaster@local.com
+    ServerAdmin <%= @webmaster %>
     DocumentRoot /var/www/<%= @sitename %>
     ServerName <%= @sitename %>
     ErrorLog /var/log/httpd/<%= @sitename %>-error_log
