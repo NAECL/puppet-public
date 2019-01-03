@@ -2,6 +2,8 @@ define wordpress::createwebsite (
   $sitename,
   $dbname,
   $sslcert = 'false',
+  $webmaster = 'webmaster@local.com',
+  $backup_site = 'true',
 ) {
   file {"/etc/httpd/conf.d/$sitename.conf":
     ensure  => present,
@@ -65,5 +67,21 @@ define wordpress::createwebsite (
     cwd     => '/usr/local/buildfiles',
     creates => "/usr/local/buildfiles/$sitename.png",
     require => File['/usr/local/bin/createWatermarkFile.sh'],
+  } ->
+
+  file {"/usr/local/buildfiles/$sitename.png":
+    owner => 'root',
+    group => 'root',
+    mode  => '0644',
+  }
+
+  if ($backup_site == 'true') {
+    file {"/usr/local/buildfiles/backup_${sitename}_website":
+      ensure  => present,
+      owner   => 'root',
+      group   => 'root',
+      mode    => '0644',
+      content => "$sitename $dbname",
+    }
   }
 }
