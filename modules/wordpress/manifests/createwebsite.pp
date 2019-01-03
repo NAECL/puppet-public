@@ -4,6 +4,7 @@ define wordpress::createwebsite (
   $sslcert = 'false',
   $webmaster = 'webmaster@local.com',
   $backup_site = 'true',
+  $watermark = undef,
 ) {
   file {"/etc/httpd/conf.d/$sitename.conf":
     ensure  => present,
@@ -62,17 +63,40 @@ define wordpress::createwebsite (
     require => File['/etc/wordpress'],
   }
 
-  exec {"create_/usr/local/buildfiles/$sitename.png":
-    command => "/usr/local/bin/createWatermarkFile.sh $sitename 1",
-    cwd     => '/usr/local/buildfiles',
-    creates => "/usr/local/buildfiles/$sitename.png",
-    require => File['/usr/local/bin/createWatermarkFile.sh'],
-  } ->
+  if ($watermark) {
+    exec {"create_/usr/local/buildfiles/$watermark.png":
+        command => "/usr/local/bin/createWatermarkFile.sh $watermark 1",
+        cwd     => '/usr/local/buildfiles',
+        creates => "/usr/local/buildfiles/$watermark.png",
+        require => File['/usr/local/bin/createWatermarkFile.sh'],
+    } ->
 
-  file {"/usr/local/buildfiles/$sitename.png":
-    owner => 'root',
-    group => 'root',
-    mode  => '0644',
+    file {"/usr/local/buildfiles/$watermark.png":
+        owner => 'root',
+        group => 'root',
+        mode  => '0644',
+    } ->
+
+    file {"/usr/local/buildfiles/$sitename.png":
+        ensure => link,
+        target => "/usr/local/buildfiles/$watermark.png",
+        owner  => 'root',
+        group  => 'root',
+        mode   => '0644',
+    }
+  } else {
+    exec {"create_/usr/local/buildfiles/$sitename.png":
+        command => "/usr/local/bin/createWatermarkFile.sh $sitename 1",
+        cwd     => '/usr/local/buildfiles',
+        creates => "/usr/local/buildfiles/$sitename.png",
+        require => File['/usr/local/bin/createWatermarkFile.sh'],
+    } ->
+
+    file {"/usr/local/buildfiles/$sitename.png":
+        owner => 'root',
+        group => 'root',
+        mode  => '0644',
+    }
   }
 
   if ($backup_site == 'true') {
