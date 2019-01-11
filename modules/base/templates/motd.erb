@@ -1,11 +1,12 @@
 
-Hostname            <%= scope['base::servername'] %>.<%= scope['base::domain'] %>
+Hostname            <%= scope['::custom_hostname'] %>.<%= scope['base::domain'] %>
 IP Address          <%= @ip_address %>
 
-Role                <%= scope['base::role'] %>
+Role                <%= scope['base::naecl::role'] %>
 <% if  scope['::custom_sub_role'] != 'undef'  -%>
 Sub Role            <%= scope['::custom_sub_role'] %>
 <% end -%>
+Resource Group      <%= scope['::custom_resource_group'] %>
 
 Manufacturer        <%= scope['::manufacturer'] %>
 Operating System    <%= scope['::operatingsystem'] %> <%= scope['::operatingsystemrelease'] %>

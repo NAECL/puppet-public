@@ -1,0 +1,156 @@
+#!/bin/bash
+############################################################################
+#
+# Name:        	create_config_from_snippets
+#
+# Author:       Ian Salt
+#
+# Date:         03-Jan-2015
+#
+# Description:  Create any config file from snippets
+#
+############################################################################
+#
+# Set up path of our own, more secure/reliable less errors when working as
+# different users, under cron etc.
+#
+export PATH=/sbin:/usr/sbin:/usr/bin:/bin:/usr/local/admintools:/usr/local/bin
+
+# Exit if we find a variable not set (Shows up a lot of bugs!!)
+#
+set -u
+
+# Set up constants and initialise global variables
+#
+exit_code=0
+progname=$(basename $0)
+USAGE="\n${progname}: [-h] -m|-c [-v] [-o <owner.group>]\n"
+
+# Uncomment this next line if a tmp dir is needed
+WORKDIR=/tmp/.${progname}.$$;mkdir ${WORKDIR}
+
+# Process Command line args
+#
+check_config=0
+make_config=0
+configDir=""
+configFile=""
+ownership=""
+tmpFile=${WORKDIR}/tmpFile
+verbose=0
+
+while getopts ":hmcvf:d:o:" nextarg  >/dev/null 2>&1
+do
+        case $nextarg in
+                "h")    echo -e $USAGE
+			exit 0
+                        ;;
+                "d")    configDir=${OPTARG}
+                        ;;
+                "f")    configFile=${OPTARG}
+                        ;;
+                "m")    make_config=1
+                        ;;
+                "c")    check_config=1
+                        ;;
+                "o")    ownership=${OPTARG}
+                        ;;
+                "v")    verbose=1
+                        ;;
+                *)      echo -e "\nError: flag -${OPTARG} not supported or used without an argument"
+                        exit 1
+                        ;;
+        esac
+done
+shift_ind=$(expr $OPTIND - 1)
+shift $shift_ind
+
+if [ "${configFile}" = "" ]
+then
+	echo -e "\nError: A Config File Name must be specified\n${USAGE}"
+	exit 1
+else
+	configFileName=$(basename ${configFile})
+fi
+
+if [ "${configDir}" = "" ]
+then
+	# By default make the build dir the file.d
+	configDir=${configFile}.d
+fi
+
+if [ $make_config -eq 1 -a $check_config -eq 1 ]
+then
+	echo -e "\nError: -c and -m options must not be selected together\n${USAGE}"
+	exit 1
+fi
+
+if [ $make_config -eq 0 -a $check_config -eq 0 ]
+then
+	echo -e "\nError: One of either the -c or -m options must be selected\n${USAGE}"
+	exit 1
+fi
+
+if [ ! -d ${configDir} ]
+then
+	echo "Error: Config Directory ${configDir} does not exist"
+	exit 1
+fi
+
+if [ ! -f ${configDir}/${configFileName}.base ]
+then
+	echo "Error: Base Config File ${configDir}/${configFileName}.base does not exist"
+	exit 1
+fi
+
+# Start on actual code
+#
+
+cp ${configDir}/${configFileName}.base ${tmpFile}
+
+for file in $(ls ${configDir})
+do
+	if [ "${file}" != "${configFileName}.base" ]
+	then
+		if [ ${verbose} -eq 1 ]
+		then
+			echo "Info: Adding ${file} to NRPE Config"
+		fi
+		cat ${configDir}/${file} >> ${tmpFile}
+	fi
+done
+
+if [ $make_config -eq 1 ]
+then
+	if [ ${verbose} -eq 1 ]
+	then
+		echo "Info: Re-Writing ${configFile}"
+	fi
+	mv ${tmpFile} ${configFile}
+    if [ "${ownership}" != "" ]
+    then
+        chown ${ownership} ${configFile}
+    fi
+fi
+
+if [ $check_config -eq 1 ]
+then
+	if [ ${verbose} -eq 1 ]
+	then
+		echo -e "Info: Checking ${configFile}"
+	fi
+
+	diff ${configFile} ${tmpFile} >/dev/null 2>&1
+	if [ $? -ne 0 ]
+	then
+		exit_code=1
+		if [ ${verbose} -eq 1 ]
+		then
+			echo "Info: Config File ${configFile} needs updating"
+		fi
+	fi
+fi
+
+# End Of Program
+#
+exit $exit_code

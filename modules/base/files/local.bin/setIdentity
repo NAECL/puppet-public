@@ -1,0 +1,224 @@
+#!/bin/bash
+
+# This script needs to change the details of a template so it can build a new server. Needs to set the following
+#
+# 1. Hostname
+# 2. IP Address (assumes 255.255.255.0 subnet mask)
+# 3. Gateway
+# 4. Role
+#
+build_config=/etc/build_custom_config
+
+. ${build_config}
+
+defaults=0
+DNS=8.8.8.8
+HTTP_PROXY=""
+HTTPS_PROXY=""
+
+progname=$(basename $0)
+USAGE="
+${progname}: [-h] [-d]
+
+	-d	Use Defaults
+
+	-h	Show This Message
+
+"
+
+# Process Command line args
+#
+
+while getopts ":hd" nextarg  >/dev/null 2>&1
+do
+        case $nextarg in
+                "h")    echo -e "$USAGE"
+			exit 0
+                        ;;
+                "d")    defaults=1
+                        ;;
+                *)      echo "Error: flag -${OPTARG} not supported or used without an argument"
+                        exit 1
+                        ;;
+        esac
+done
+shift_ind=$(expr $OPTIND - 1)
+shift $shift_ind
+
+# Ensure there is a nic
+exitCode=0
+/sbin/ethtool eth0 >/dev/null 2>&1
+if [ $? -ne 0 ]
+then
+	echo "Error: eth0 does not exist, needed to setup system"
+	exitCode=1
+fi
+
+if [ ${exitCode} -ne 0 ]
+then
+	exit ${exitCode}
+fi
+
+if [ ${defaults} -eq 0 ]
+then
+	echo -e "\nRe-Configuring the identity of this server\n"
+	echo -e "What is the new hostname of this server (Default=${HOSTNAME}) ? \c"
+	read hostname
+	if [ "${hostname}" = "" ]
+	then
+		hostname=${HOSTNAME}
+	fi
+
+	echo -e "What is the new ip address of this server (Default=${IPADDR}) ? \c"
+	read ipaddress
+	if [ "${ipaddress}" = "" ]
+	then
+		ipaddress=${IPADDR}
+	fi
+
+	echo -e "What is the domain of this server (Default=${DOMAIN}) ? \c"
+	read domain
+	if [ "${domain}" = "" ]
+	then
+		domain=${DOMAIN}
+	fi
+
+	echo -e "What is the config of this server (Default=${YAML}) ? \c"
+	read yaml
+	if [ "${yaml}" = "" ]
+	then
+		yaml=${YAML}
+	fi
+
+	if [ "${ipaddress}" != "dhcp" ]
+	then
+		# Assume class C, and gateway 1
+		GATEWAY="$(echo ${ipaddress}|cut -d . -f 1,2,3).1"
+		echo -e "What is the gateway of this server (Default=${GATEWAY}) ? \c"
+		read gateway
+		if [ "${gateway}" = "" ]
+		then
+			gateway=${GATEWAY}
+		fi
+		echo -e "What is the DNS of this server (Default=${DNS}) ? \c"
+		read dns
+		if [ "${dns}" = "" ]
+		then
+			dns=${DNS}
+		fi
+	else
+		GATEWAY="dhcp"
+		echo -e "Set the gateway, or leave at dhcp if you want DHCP to take care of this: (Default=${GATEWAY}) ? \c"
+		read gateway
+		if [ "${gateway}" = "" ]
+		then
+			gateway=${GATEWAY}
+		fi
+	fi
+
+	echo -e "Do you use a proxy [y/N]?\c"
+	read proxyans
+	if [ "${proxyans}" = "y" -o "${proxyans}" = "Y" ]
+	then
+		echo -e "What is the HTTP Proxy (<ipaddr>:<port>) ?"
+		read http_proxy
+		echo -e "What is the HTTPS Proxy (<ipaddr>:<port>) ?"
+		read https_proxy
+		HTTP_PROXY_STR="http_proxy=http://${http_proxy}\nhttps_proxy=https://${https_proxy}\n"
+	else
+		HTTP_PROXY_STR="\n"
+	fi
+
+	echo -e "What is the new environment of this server, valid values are development, live. (Default=${ENVIRONMENT}) ? \c"
+	read environment
+	if [ "${environment}" == "" ]
+	then
+		environment=${ENVIRONMENT}
+    else
+        if [ "${environment}" != "live" -a "${environment}" != "development" ]
+        then
+            echo "${environment} is not a valid environment"
+            exit 1
+        fi
+	fi
+
+	echo -e "The following changes will be applied\nHostname: ${hostname}\nDomain: ${domain}\nIP Address: ${ipaddress}\nGateway: ${gateway}\nEnvironment: ${environment}\n${HTTP_PROXY_STR}\nIs this OK [y/N] ? \c"
+	read ans
+
+	if [ "${ans}" != 'y' -a "${ans}" != 'Y' ]
+	then
+		echo "OK let me know when youve made up your mind."
+		exit 1
+	fi
+else
+		hostname=${HOSTNAME}
+		domain=${DOMAIN}
+		ipaddress="dhcp"
+		gateway="dhcp"
+		environment=${ENVIRONMENT}
+        dns=${DNS}
+fi
+
+echo -e "\nHostname: ${hostname}.${domain}\nEnvironment: ${environment}\nIP Address: ${ipaddress}\nDNS: ${dns}\nConfig: ${yaml}\n" > /etc/motd
+
+# Remove and re-add the hostname
+sed -i '/^HOSTNAME=/d' /etc/sysconfig/network
+echo "HOSTNAME=${hostname}.${domain}" >> /etc/sysconfig/network
+sed -i '/^YAML=/d' ${build_config}
+echo "YAML=${yaml}" >> ${build_config}
+sed -i '/^DOMAIN=/d' ${build_config}
+echo "DOMAIN=${domain}" >> ${build_config}
+sed -i '/^HOSTNAME=/d' ${build_config}
+echo "HOSTNAME=${hostname}" >> ${build_config}
+
+# Zero the udev file
+> /etc/udev/rules.d/70-persistent-net.rules
+
+# Remove the ip in build_custom_config, and create new ifcfg file
+sed -i '/^IPADDR=/d' ${build_config}
+
+if [ "${ipaddress}" = "dhcp" ]
+then
+	sed -e '/^IPADDR=/d' -e '/^NETMASK=/d' /usr/local/tools/ifcfg-eth0-template > /etc/sysconfig/network-scripts/ifcfg-eth0
+	sed -i 's/static/dhcp/' /etc/sysconfig/network-scripts/ifcfg-eth0
+	if [ "${gateway}" != "dhcp" ]
+	then
+		sed -i 's/GATEWAY=.*/GATEWAY='${gateway}'/' /etc/sysconfig/network-scripts/ifcfg-eth0
+	else
+		sed -i '/^GATEWAY=/d' /etc/sysconfig/network-scripts/ifcfg-eth0
+	fi
+else
+    echo -e "#\nsearch ${domain}\nnameserver ${dns}\n" > /etc/resolv.conf
+
+	sed -e 's/^IPADDR=.*/IPADDR='${ipaddress}'/' -e 's/^GATEWAY=.*/GATEWAY='${gateway}'/' /usr/local/tools/ifcfg-eth0-template > /etc/sysconfig/network-scripts/ifcfg-eth0
+fi
+
+# Set Up the yaml link
+puppet_dir=/etc/puppetlabs/puppet/hieradata
+mkdir -p ${puppet_dir}
+ln -sf /etc/puppet/git/hieradata/${yaml}.yaml ${puppet_dir}/common.yaml
+
+# Remove and re-add the environment, community, gateway, and ip address
+sed -i '/^ENVIRONMENT=/d' ${build_config}
+echo "ENVIRONMENT=${environment}" >> ${build_config}
+sed -i '/^GATEWAY=/d' ${build_config}
+echo "GATEWAY=${gateway}" >> ${build_config}
+
+# Proxy Config
+if [ "${http_proxy}" != "" ]
+then
+	sed -i '/^export.*http_proxy/d' ~/.bashrc
+	echo "export http_proxy=http://${http_proxy}" >> ~/.bashrc
+fi
+
+if [ "${https_proxy}" != "" ]
+then
+	sed -i '/^export.*https_proxy/d' ~/.bashrc
+	echo "export https_proxy=https://${https_proxy}" >> ~/.bashrc
+fi
+
+# Finally reboot
+service network restart
+puppetBuildStandalone -N
+init 6
+
