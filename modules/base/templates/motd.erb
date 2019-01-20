@@ -2,7 +2,7 @@
 Hostname            <%= scope['::custom_hostname'] %>.<%= scope['base::domain'] %>
 IP Address          <%= @ip_address %>
 
-Role                <%= scope['base::naecl::role'] %>
+Role                <%= scope['base::role'] %>
 <% if  scope['::custom_sub_role'] != 'undef'  -%>
 Sub Role            <%= scope['::custom_sub_role'] %>
 <% end -%>
