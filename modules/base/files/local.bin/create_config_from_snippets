@@ -14,11 +14,23 @@
 # Set up path of our own, more secure/reliable less errors when working as
 # different users, under cron etc.
 #
-export PATH=/sbin:/usr/sbin:/usr/bin:/bin:/usr/local/admintools:/usr/local/bin
+export PATH=/sbin:/usr/sbin:/usr/bin:/bin:/usr/local/bin
+
+# Set up signal handlers
+#
+trap exit_all INT HUP QUIT
 
 # Exit if we find a variable not set (Shows up a lot of bugs!!)
 #
 set -u
+
+# Set up Functions
+#
+exit_all () {
+	set +u
+        rm -rf $WORKDIR >/dev/null 2>&1
+        exit $1
+}
 
 # Set up constants and initialise global variables
 #
@@ -43,7 +55,7 @@ while getopts ":hmcvf:d:o:" nextarg  >/dev/null 2>&1
 do
         case $nextarg in
                 "h")    echo -e $USAGE
-			exit 0
+            			exit 0
                         ;;
                 "d")    configDir=${OPTARG}
                         ;;
@@ -68,7 +80,7 @@ shift $shift_ind
 if [ "${configFile}" = "" ]
 then
 	echo -e "\nError: A Config File Name must be specified\n${USAGE}"
-	exit 1
+	exit_all 1
 else
 	configFileName=$(basename ${configFile})
 fi
@@ -82,25 +94,25 @@ fi
 if [ $make_config -eq 1 -a $check_config -eq 1 ]
 then
 	echo -e "\nError: -c and -m options must not be selected together\n${USAGE}"
-	exit 1
+	exit_all 1
 fi
 
 if [ $make_config -eq 0 -a $check_config -eq 0 ]
 then
 	echo -e "\nError: One of either the -c or -m options must be selected\n${USAGE}"
-	exit 1
+	exit_all 1
 fi
 
 if [ ! -d ${configDir} ]
 then
 	echo "Error: Config Directory ${configDir} does not exist"
-	exit 1
+	exit_all 1
 fi
 
 if [ ! -f ${configDir}/${configFileName}.base ]
 then
 	echo "Error: Base Config File ${configDir}/${configFileName}.base does not exist"
-	exit 1
+	exit_all 1
 fi
 
 # Start on actual code
@@ -153,4 +165,4 @@ fi
 
 # End Of Program
 #
-exit $exit_code
+exit_all $exit_code
