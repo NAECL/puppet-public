@@ -1,0 +1,8 @@
+#!/bin/bash
+
+
+
+/sbin/service ntpd stop
+/usr/sbin/ntpd -gq
+/sbin/service ntpd start
+

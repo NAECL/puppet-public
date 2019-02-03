@@ -1,8 +1,9 @@
 # This module contains the default configuration common to all servers.
 class base (
   $role     = 'base',
-  $domain   = 'local',
+  $domain   = 'local.com',
   $hostname = undef,
+  $project  = 'unassigned',
 ) {
   if ( $hostname == undef ) {
     $servername = $::custom_hostname
@@ -21,4 +22,5 @@ class base (
   include packages
   include rsyslog
   include clam
+  include nrpe
 }

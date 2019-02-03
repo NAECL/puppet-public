@@ -1,0 +1,38 @@
+#!/bin/bash
+#
+# A template for a nagios check, can be used to base other checks on
+#
+PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/admintools
+
+utils=/usr/local/nagios/libexec/custom/utils.sh
+
+if [ ! -r ${utils} ]
+then
+	echo "Unknown: Unable to find config file ${utils}"
+	exit 3
+else
+	. ${utils}
+fi
+
+refFile=/etc/last_good_puppet_run
+
+if [ ! -f ${refFile} ]
+then
+	echo "Unknown: Unable to find ${refFile}. Is this a puppet install?"
+	exit ${STATE_UNKNOWN}
+fi
+
+lastRun=$(date -r ${refFile} '+%s')
+now=$(date '+%s')
+age=$(( $now - $lastRun ))
+minutes=$(( ${age} / 60 ))
+
+# Give things 60 minutes 
+if [ ${age} -gt 3600 ]
+then
+	echo "Warning: Puppet has not had a successful run on this server for ${minutes} minutes(s)"
+	exit ${STATE_WARNING}
+else
+	echo "Info: Puppet has run successfully in the last hour"
+	exit ${STATE_OK}
+fi

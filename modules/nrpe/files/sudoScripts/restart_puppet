@@ -1,0 +1,12 @@
+#!/bin/bash
+
+status=$(/sbin/service puppet status)
+
+if [ "${status}" = "puppet is stopped" ]
+then
+	echo "Info: Restarting Puppet"
+	/sbin/service puppet start
+else
+	echo "Info: Status is ${status}: Not Starting Puppet"
+fi
+

@@ -1,0 +1,6 @@
+#!/bin/bash
+#
+PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/admintools
+
+echo "Info: Scripts No Longer Managed By CVS On This Server - Using Puppet/Git"
+exit 0

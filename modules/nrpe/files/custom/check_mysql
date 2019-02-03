@@ -1,0 +1,23 @@
+#!/bin/bash
+#
+PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/admintools
+
+utils=/usr/local/nagios/libexec/custom/utils.sh
+
+if [ ! -r ${utils} ]
+then
+	echo "Unknown: Unable to find config file ${utils}"
+	exit 3
+else
+	. ${utils}
+fi
+
+CMDOUTPUT=$(sudo /usr/local/nagios/libexec/sudoScripts/check_mysql_status 2>&1)
+if [ $? -ne 0 ]
+then
+	echo "Critical: mysql not responding to simple query - $CMDOUTPUT|response=0"
+	exit ${STATE_CRITICAL}
+else
+	echo "Info: mysql responding OK|response=1"
+	exit ${STATE_OK}
+fi

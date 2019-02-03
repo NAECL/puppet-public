@@ -1,0 +1,72 @@
+#!/bin/sh
+#
+# Created 2000-01-03 by jaclu@grm.se
+#
+# Modified 2016-03-01 by Ian Salt to give exit status to calling scripts
+#
+# nrpe          This shell script takes care of starting and stopping
+#               nrpe.
+#
+# chkconfig: 2345 80 30
+# description: nrpe is a daemon for a remote nagios server, \
+#              running nagios plugins on this host.
+# processname: nrpe
+# config: /usr/local/nagios/etc/nrpe.cfg
+
+
+# Source function library
+if [ -f /etc/rc.d/init.d/functions ]
+then
+  . /etc/rc.d/init.d/functions
+elif [ -f /etc/init.d/functions ]
+then
+  . /etc/init.d/functions
+elif [ -f /etc/rc.d/functions ]
+then
+  . /etc/rc.d/functions
+fi
+
+
+NrpeBin=/usr/local/nagios/bin/nrpe
+NrpeCfg=/usr/local/nagios/etc/nrpe.cfg
+LockFile=/var/lock/subsys/nrpe
+
+# See how we were called.
+case "$1" in
+  start)
+    # Start daemons.
+    echo -n "Starting nrpe: "
+    $NrpeBin -c $NrpeCfg -d
+    echo
+    touch $LockFile
+    ;;
+  stop)
+    # Stop daemons.
+    echo -n "Shutting down nrpe: "
+    killproc nrpe
+    echo
+    rm -f $LockFile
+    ;;
+  status)
+    id=$(pgrep -f /usr/local/nagios/bin/nrpe)
+    retVal=$?
+    if [ $retVal -eq 0 ]
+    then
+      echo "Info: nrpe is running (PID ${id})"
+      exit $retVal
+    else
+      echo "Warning: nrpe is not running"
+      exit $retVal
+    fi
+    ;;
+  restart)
+    $0 stop
+    $0 start
+    ;;
+  *)
+    echo "Usage: nrpe {start|stop|restart|status}"
+    exit 1
+    ;;
+  esac
+
+exit 0

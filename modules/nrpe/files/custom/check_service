@@ -1,0 +1,73 @@
+#!/bin/bash
+#
+# A template for a nagios check, can be used to base other checks on
+#
+PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/admintools
+
+utils=/usr/local/nagios/libexec/custom/utils.sh
+
+if [ ! -r ${utils} ]
+then
+	echo "Unknown: Unable to find config file ${utils}"
+	exit 3
+else
+	. ${utils}
+fi
+
+CRIT_ERRORS=0
+WARN_ERRORS=0
+UNKNOWN_ERRORS=0
+
+if [ $# -lt 1 ]
+then
+	echo "Unknown: No Service Specified"
+	exit ${STATE_UNKNOWN}
+else
+	SERVICE=$1
+fi
+
+if [ $# -eq 2 ]
+then
+	RESTART=$(echo $2|tr '[a-z]' '[A-Z]')
+else
+	RESTART=NO
+fi
+
+# This next bit is overkill, but works well in a loop if checking more than 1 thing
+#
+echo -e "Checking ${SERVICE} Service - \c"
+sudo /sbin/service ${SERVICE} status
+retVal=$?
+if [ ${retVal} -ne 0 ]
+then
+	CRIT_ERRORS=1
+	if [ "${RESTART}" == "RESTART" ]
+	then
+		# Some brain dead services don't support restart
+		sudo /sbin/service ${SERVICE} stop > /dev/null 2>&1
+		sudo /sbin/service ${SERVICE} start
+	fi
+	echo -e "${SERVICE} Not Running (${retVal})"
+else
+	echo -e "${SERVICE} OK"
+fi
+
+# Once checks are done, exit with the most important status
+#
+if [ ${CRIT_ERRORS} -eq 1 ]
+then
+	exit ${STATE_CRITICAL}
+fi
+
+if [ ${WARN_ERRORS} -eq 1 ]
+then
+	exit ${STATE_WARNING}
+fi
+
+if [ ${UNKNOWN_ERRORS} -eq 1 ]
+then
+	exit ${STATE_UNKNOWN}
+fi
+
+exit ${STATE_OK}
+
