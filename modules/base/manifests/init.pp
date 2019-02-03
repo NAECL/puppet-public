@@ -20,7 +20,6 @@ class base (
   include ntp
   include hosts
   include packages
-  include rsyslog
   include clam
   include nrpe
 }
