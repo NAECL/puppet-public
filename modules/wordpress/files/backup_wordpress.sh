@@ -30,32 +30,44 @@ fi
 
 weekStamp=$(date '+%Y%V')
 dayStamp=$(date '+%Y%V%u')
-bucketRegion=eu-west-2
+region=eu-west-2
 backupDir=/var/lib/siteBackups/${site}
 mkdir -p ${backupDir}
-dbBackup=${backupDir}/${dbName}.${dayStamp}.sql.gz
-siteBackup=${backupDir}/${site}.${dayStamp}.tar.gz
-listedIncrementalFile=${backupDir}/${site}.${weekStamp}.snar
+dbBackup=${dbName}.${dayStamp}.sql.gz
+siteBackup=${site}.${dayStamp}.tar.gz
+incFile=${backupDir}/${site}.${weekStamp}.snar
+stateFile=${backupDir}/${site}.state
+
+date '+%Y%m%d %H:%M:%S Backup Running' > ${stateFile}
+
+# Sync the state file before has effect of creating the directory if needed.
+date '+%Y%m%d %H:%M:%S Starting First AWS Sync'
+aws --region ${region} s3 sync ${backupDir} s3://${BACKUP_BUCKET}/wordpress/${ENVIRONMENT}/${site}/ >/dev/null 2>&1
+if [ $? -ne 0 ]
+then
+    date '+%Y%m%d %H:%M:%S Sync to AWS Failed'
+    exit 1
+fi
 
 cd /var/www
-date "+%Y%m%d %H:%M:%S Starting Site Backup to ${siteBackup}"
-tar -zc --listed-incremental=${listedIncrementalFile} -f ${siteBackup} ${site}
+date "+%Y%m%d %H:%M:%S Starting Site Backup to s3://${BACKUP_BUCKET}/wordpress/${ENVIRONMENT}/${site}/${siteBackup}"
+tar -zc --listed-incremental=${incFile} -f - ${site} | aws --region ${region} s3 cp - s3://${BACKUP_BUCKET}/wordpress/${ENVIRONMENT}/${site}/${siteBackup}
 if [ $? -ne 0 ]
 then
     date '+%Y%m%d %H:%M:%S Site Backup Failed'
     exit 1
 fi
 
-date "+%Y%m%d %H:%M:%S Starting DB Backup to ${dbBackup}"
-mysqldump ${dbName} | gzip -c > ${dbBackup}
+date "+%Y%m%d %H:%M:%S Starting DB Backup to s3://${BACKUP_BUCKET}/wordpress/${ENVIRONMENT}/${site}/${dbBackup}"
+mysqldump ${dbName} | gzip -c | aws --region ${region} s3 cp - s3://${BACKUP_BUCKET}/wordpress/${ENVIRONMENT}/${site}/${dbBackup}
 if [ $? -ne 0 ]
 then
     date '+%Y%m%d %H:%M:%S DB Backup Failed'
     exit 1
 fi
 
-date '+%Y%m%d %H:%M:%S Starting AWS Sync'
-aws --region ${bucketRegion} s3 sync ${backupDir} s3://${BACKUP_BUCKET}/wordpress/${ENVIRONMENT}/${site}/ >/dev/null 2>&1
+date '+%Y%m%d %H:%M:%S Starting Final AWS Sync'
+aws --region ${region} s3 sync ${backupDir} s3://${BACKUP_BUCKET}/wordpress/${ENVIRONMENT}/${site}/ >/dev/null 2>&1
 if [ $? -ne 0 ]
 then
     date '+%Y%m%d %H:%M:%S Transfer to AWS Failed'
@@ -63,5 +75,6 @@ then
 else
     date '+%Y%m%d %H:%M:%S Transfer to AWS OK - Finished Backups'
 fi
-echo -e "\n\n"
 
+date '+%Y%m%d %H:%M:%S Backup OK' > ${stateFile}
+echo -e "\n\n"
