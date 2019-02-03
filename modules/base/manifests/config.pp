@@ -155,4 +155,19 @@ class base::config (
     hour    => 5,
     minute  => 0,
   }
+
+  file {'/usr/local/config/dir_clean.base.conf':
+    ensure  => present,
+    owner   => 'root',
+    group   => 'root',
+    mode    => '0640',
+    content => template('base/dir_clean.base.conf.erb'),
+  }
+
+  cron { '/usr/local/config/dir_clean.base.conf':
+    command => '/usr/local/bin/dir_clean -f /usr/local/config/dir_clean.base.conf >> /var/log/dir_clean.base.log 2>&1',
+    user    => 'root',
+    hour    => 1,
+    minute  => 0,
+  }
 }
