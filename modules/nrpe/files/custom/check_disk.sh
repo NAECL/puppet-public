@@ -70,7 +70,7 @@ shift $shift_ind
 if [ ${checkUnchecked} -eq 1 ]
 then
 	now=$(date '+%s')
-	PARTITIONS=$(mount | awk '/^\/dev/ {print $3}')
+	PARTITIONS=$(df | awk '/^\/dev/ {print $6}')
 	for PART in $PARTITIONS
 	do
 		for type in disk inode
