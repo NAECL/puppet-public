@@ -12,19 +12,12 @@ class nrpe::config (
     system => true,
   }
 
-  # file {'/etc/sudoers.d/nagios':
-    # owner  => 'root',
-    # group  => 'root',
-    # mode   => '0640',
-    # content => "# User rules for nagios\nnagios ALL=(ALL) NOPASSWD:ALL\n",
-  # }
-
-  # file {'/etc/sudoers.d/nrpe':
-    # owner  => 'root',
-    # group  => 'root',
-    # mode   => '0640',
-    # content => "# User rules for nrpe\nnrpe ALL=(ALL) NOPASSWD:ALL\n",
-  # }
+  file {'/etc/sudoers.d/nrpe':
+    owner  => 'root',
+    group  => 'root',
+    mode   => '0640',
+    content => "# User rules for nrpe\nnrpe ALL=(ALL) NOPASSWD:/usr/local/nagios/libexec/sudoScripts/\n",
+  }
 
   file {'/usr/local/nagios':
     ensure => directory,
