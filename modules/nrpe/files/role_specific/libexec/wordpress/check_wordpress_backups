@@ -1,0 +1,63 @@
+#!/bin/bash
+#
+# A template for a nagios check, can be used to base other checks on
+#
+PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/admintools
+
+utils=/usr/local/nagios/libexec/custom/utils.sh
+
+if [ ! -r ${utils} ]
+then
+	echo "Unknown: Unable to find config file ${utils}"
+	exit 3
+else
+	. ${utils}
+fi
+
+CRIT_ERRORS=0
+WARN_ERRORS=0
+UNKNOWN_ERRORS=0
+
+last_good_backup_file=/var/lib/siteBackups/Wordpress_Backup_Result
+
+if [ ! -f ${last_good_backup_file} ]
+then
+    CRIT_ERRORS=1
+    echo -e "No Successful backup recorded"
+else
+    last_good_backup=$(/usr/bin/stat -c '%Y' ${last_good_backup_file})
+    now=$(/usr/bin/date '+%s')
+
+    # Set the threshold to 30 hours, so alarm does not go off overnight
+    hours=30
+    backup_threshold=$(( ${hours} * 60 * 60 ))
+    time_since_good_backup=$(( ${now} - ${last_good_backup} ))
+
+    if [ ${time_since_good_backup} -gt ${backup_threshold} ]
+    then
+	    CRIT_ERRORS=1
+	    echo -e "No Successful backup within ${hours} hours"
+    else
+	    echo -e "Backups OK"
+    fi
+fi
+
+# Once checks are done, exit with the most important status
+#
+if [ ${CRIT_ERRORS} -eq 1 ]
+then
+	exit ${STATE_CRITICAL}
+fi
+
+if [ ${WARN_ERRORS} -eq 1 ]
+then
+	exit ${STATE_WARNING}
+fi
+
+if [ ${UNKNOWN_ERRORS} -eq 1 ]
+then
+	exit ${STATE_UNKNOWN}
+fi
+
+exit ${STATE_OK}
+
