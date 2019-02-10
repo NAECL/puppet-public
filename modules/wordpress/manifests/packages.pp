@@ -6,6 +6,7 @@ class wordpress::packages {
       'httpd',
       'stress',
       'certbot',
+      'python2-certbot-apache',
       'ImageMagick',
       'php-mysql',
       'vsftpd',
