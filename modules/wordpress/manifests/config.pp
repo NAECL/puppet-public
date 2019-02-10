@@ -50,6 +50,14 @@ class wordpress::config (
     source  => 'puppet:///modules/wordpress/backup_websites.sh',
   }
 
+  file {'/usr/local/bin/restore_wordpress_backup.sh':
+    ensure  => present,
+    owner   => 'root',
+    group   => 'root',
+    mode    => '0750',
+    source  => 'puppet:///modules/wordpress/restore_wordpress_backup.sh',
+  }
+
   cron { 'backup_websites':
     command => '/usr/local/bin/backup_websites.sh >/dev/null 2>&1',
     user    => 'root',
