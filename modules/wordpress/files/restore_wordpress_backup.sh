@@ -7,12 +7,12 @@ verbose=0
 wwwDir=/var/www
 region=eu-west-2
 builddir=/usr/local/buildfiles
-dayStamp=$(date '+%Y%V%u')
+weekStamp=$(date '+%Y%V')
 progname=$(basename $0)
 USAGE="
 ${progname}: [-h|-H] [-l] [-d <datestamp>] -s <site>
 
-    -d  Date to restore from (If not present, uses latest date in format %Y%V%u)
+    -d  Date to restore from (If not present, uses latest date in format %Y%V (YearWeek, E.g. 201904))
 
     -e  Environment (Overrides the default of ${ENVIRONMENT})
 
@@ -28,13 +28,37 @@ ${progname}: [-h|-H] [-l] [-d <datestamp>] -s <site>
 "
 
 EXTENDED_USAGE="
-This is a script that restores a wordpress backup to a new site. It uses settings from various files to find the details it needs for a restore. These files/settings are:
+This is a script that restores a wordpress backup to a new site.
+It uses settings from various files to find the details it needs for a restore. These files/settings are:
 
 /etc/build_custom_config ENVIRONMENT, BACKUP_BUCKET
 
 ${builddir}/backup_{sitename}_website contains site name and database name
 
-Command Used To Copy Is: aws --region ${region} s3 cp s3://${BACKUP_BUCKET}/wordpress/${ENVIRONMENT}/${site}/file
+The backups are daily incremental backups over the course of a week. They have the name format:
+
+    {site}.YYYYWWD.tar.gz
+    {db_name}.YYYYWWD.sql.gz
+
+The string YYYYWWD is given by using the following format for the date command %Y%V%u
+
+The command used to copy a file from AWS is:
+
+    aws --region ${region} s3 cp s3://${BACKUP_BUCKET}/wordpress/${ENVIRONMENT}/{site}/{file}
+
+This script performs restores of the wordpress database, and directory under /var/www.
+Since the tarfiles are incremental backups, if you want to install them manually, untar all the backups related
+to a particular snar file, in order oldest first, using the command - tar zx --listed-incremental=/dev/null -f <file>
+
+E.g.
+
+tar zx --listed-incremental=/dev/null -f tar_file1 -C /var/www
+tar zx --listed-incremental=/dev/null -f tar_file2 -C /var/www
+tar zx --listed-incremental=/dev/null -f tar_file3 -C /var/www
+tar zx --listed-incremental=/dev/null -f tar_file4 -C /var/www
+tar zx --listed-incremental=/dev/null -f tar_file5 -C /var/www
+tar zx --listed-incremental=/dev/null -f tar_file6 -C /var/www
+tar zx --listed-incremental=/dev/null -f tar_file7 -C /var/www
 
 "
 
@@ -52,7 +76,7 @@ do
                 ;;
         l)      list=1
                 ;;
-        d)      dayStamp=${OPTARG}
+        d)      weekStamp=${OPTARG}
                 ;;
         e)      ENVIRONMENT=${OPTARG}
                 ;;
@@ -77,17 +101,18 @@ then
     echo -e "${USAGE}\n\nError: No Site Specified\n"
     exit 1
 fi
+
+# Set the variables we can now the site is known
 dbName=$(awk '{print $2}' ${builddir}/backup_${site}_website)
-dbBackup=${dbName}.${dayStamp}.sql
-siteBackup=${site}.${dayStamp}.tar.gz
+listing=$(aws --region ${region} s3 ls s3://${BACKUP_BUCKET}/wordpress/${ENVIRONMENT}/${site}/)
 
 if [ ${list} -eq 1 ]
 then
-    aws --region ${region} s3 ls s3://${BACKUP_BUCKET}/wordpress/${ENVIRONMENT}/${site}/
+    echo -e "${listing}"
     exit 0
 fi
 
-info_msg "Restoring Website ${site}"
+info_msg "Restoring Website ${site} to ${wwwDir}/${site}"
 # First restore the tar backup. after checking that there is a backup to copy over the top of.
 if [ ! -d "${wwwDir}/${site}" ]
 then
@@ -100,12 +125,23 @@ then
     exit 1
 fi
 mv ${wwwDir}/${site} ${wwwDir}/${site}.sav
-aws --region ${region} s3 cp s3://${BACKUP_BUCKET}/wordpress/${ENVIRONMENT}/${site}/${siteBackup} - | tar zxf - -C ${wwwDir}
-if [ $? -ne 0 ]
-then
-    echo "Error: Unable to extract ${siteBackup} from S3 backup"
-    exit 1
-fi
+
+backup_nos=$(echo -e "${listing}" |awk '{print $4}' |grep -E "${site}.${weekStamp}..tar.gz" |sed -e 's/^'${site}.${weekStamp}'//' -e 's/.tar.gz$//' |sort -n)
+
+for backup_no in ${backup_nos}
+do
+    siteBackup=${site}.${weekStamp}${backup_no}.tar.gz
+    info_msg "Restoring Backup File ${siteBackup}"
+    aws --region ${region} s3 cp s3://${BACKUP_BUCKET}/wordpress/${ENVIRONMENT}/${site}/${siteBackup} - | tar zxf - -C ${wwwDir}
+    if [ $? -ne 0 ]
+    then
+        echo "Error: Unable to extract ${siteBackup} from S3 backup"
+        exit 1
+    fi
+done
+# Set the required db to the one matching the last backup
+dbBackup=${dbName}.${weekStamp}${backup_no}.sql
+
 cp ${wwwDir}/${site}.sav/wp-config.php ${wwwDir}/${site}
 if [ $? -ne 0 ]
 then
@@ -115,23 +151,25 @@ fi
 
 # Now restore the database
 info_msg "Restoring Database ${dbName}"
-cd /tmp
-aws --region ${region} s3 cp s3://${BACKUP_BUCKET}/wordpress/${ENVIRONMENT}/${site}/${dbBackup}.gz . >/dev/null
+aws --region ${region} s3 cp s3://${BACKUP_BUCKET}/wordpress/${ENVIRONMENT}/${site}/${dbBackup}.gz /tmp >/dev/null
 if [ $? -ne 0 ]
 then
-    echo -e "Error: unable to retrieve ${dbBackup}.gz from S3"
+    echo -e "Error: unable to retrieve ${dbBackup}.gz from S3 to ${dbBackup}.gz"
     exit 1
 fi
+
+dbBackup="/tmp/${dbBackup}"
 gzip -d ${dbBackup}.gz
 if [ $? -ne 0 ]
 then
     echo -e "Error: unable to unzip ${dbBackup}.gz"
     exit 1
 fi
+
 echo -e "show databases;\ndrop database ${dbName};\ncreate database ${dbName};\nuse ${dbName};\nsource ${dbBackup};" | mysql >/dev/null
 if [ $? -ne 0 ]
 then
-    echo "Error: Unable to restore database backup"
+    echo "Error: Unable to restore database backup ${dbBackup}"
     rm ${dbBackup}
     exit 1
 fi
