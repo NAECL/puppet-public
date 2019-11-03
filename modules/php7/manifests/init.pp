@@ -11,4 +11,9 @@ class php7 (
     source  => 'puppet:///modules/php7/RPM-GPG-KEY-remi',
   }
 
+  file { '/etc/yum.repos.d/remi-php7.repo':
+    ensure  => present,
+    content => template('php7/remi-php7.repo.erb'),
+  }
+
 }
