@@ -7,7 +7,7 @@ class php7 (
     ensure  => present,
     owner   => 'root',
     group   => 'root',
-    mode    => '0400',
+    mode    => '0644',
     source  => 'puppet:///modules/php7/RPM-GPG-KEY-remi',
   }
 
