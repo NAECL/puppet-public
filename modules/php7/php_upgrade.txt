@@ -1,0 +1,22 @@
+# Instructions here for PHP 5.6 upgrade
+# https://www.tecmint.com/install-php-5-6-on-centos-7/
+
+# This wasn't needed
+# yum install https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
+
+# This installed, but wasn't needed either I think
+# yum install http://rpms.remirepo.net/enterprise/remi-release-7.rpm
+
+# I think this just lets me run a command to enable a repo
+# yum install yum-utils
+
+# 3. One of the most important program provided by yum-utils is yum-config-manager, which you can use to active Remi repository as the
+# default repository for installing various PHP versions. For example, if you want to install PHP 5.5, PHP 5.6 or PHP 7.2 on
+# CentOS 7, just enable it and install as shown.
+
+# This can be done with a template
+# yum-config-manager --enable remi-php72   [Install PHP 7.2]
+
+# If you upgrade then I think patching will probably do this, I think apache needs a restart though
+# yum install php php-mcrypt php-cli php-gd php-curl php-mysql php-ldap php-zip php-fileinfo
+
