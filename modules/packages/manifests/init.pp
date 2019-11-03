@@ -3,6 +3,7 @@ class packages {
 
     package {[
         'telnet',
+        'mlocate',
         'wget',
     ]:
         ensure => present,
