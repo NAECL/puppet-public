@@ -8,7 +8,7 @@ class wordpress::packages {
       'certbot',
       'python2-certbot-apache',
       'ImageMagick',
-      'php-mysql',
+      'php-mysqlnd',
       'vsftpd',
     ]:
     ensure => present,
