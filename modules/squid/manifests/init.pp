@@ -1,5 +1,5 @@
 class squid (
-  localnet = undef,
+  $localnet = undef,
 ) {
   class {'squid::packages': } ->
   class {'squid::config': }
