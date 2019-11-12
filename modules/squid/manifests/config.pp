@@ -1,4 +1,6 @@
-class squid::config {
+class squid::config (
+  $localnet = undef,
+) {
   file {'/etc/squid/squid.conf':
     ensure  => present,
     owner   => 'root',
