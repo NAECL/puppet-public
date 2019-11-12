@@ -4,6 +4,6 @@ class squid::config {
     owner   => 'root',
     group   => 'root',
     mode    => '0750',
-    content => 'squid config',
+    content => template('squid/squid.conf.erb'),
   }
 }
