@@ -7,7 +7,8 @@ class squid::config (
     group   => 'squid',
     mode    => '0640',
     content => template('squid/squid.conf.erb'),
-  }
+    notify  => Service['squid'],
+  } ->
 
   service {'squid':
     enable => true,
