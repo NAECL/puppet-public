@@ -6,4 +6,9 @@ class squid::config {
     mode    => '0640',
     content => template('squid/squid.conf.erb'),
   }
+
+  service {'squid':
+    enable => true,
+    ensure => running,
+  }
 }
