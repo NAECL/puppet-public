@@ -1,25 +1,122 @@
 class packages {
-    # Common Packages
+  # 'NetworkManager',
+  # 'linux-image-generic',
+  # 'at-spi',
+  # 'control-center',
+  # 'dbus',
+  # 'e2fsprogs',
+  # 'eog',
+  # 'file',
+  # 'firstboot',
+  # 'gcc',
+  # 'gcc-c++',
+  # 'gdb',
+  # 'gdm',
+  # 'git',
+  # 'glib2',
+  # 'glibc',
+  # 'glx-utils',
+  # 'gok',
+  # 'gvfs-archive',
+  # 'gvfs-fuse',
+  # 'gvfs-smb',
+  # 'iperf',
+  # 'libcurl-devel',
+  # 'libstdc++',
+  # 'logwatch',
+  # 'man',
+  # 'metacity',
+  # 'mtr',
+  # 'mtr-gtk',
+  # 'nc',
+  # 'net-snmp',
+  # 'net-snmp-perl',
+  # 'net-snmp-utils',
+  # 'nmap-ncat',
+  # 'notification-daemon',
+  # 'nss-softokn-freebl',
+  # 'openssh-askpass',
+  # 'openssh-clients',
+  # 'openssl',
+  # 'openssl-devel',
+  # 'orca',
+  # 'parted',
+  # 'perl-DBD-MySQL',
+  # 'perl-DBI',
+  # 'perl-Geo-IP',
+  # 'perl-JSON',
+  # 'perl-Module-Find',
+  # 'perl-Nagios-Plugin',
+  # 'perl-TermReadKey',
+  # 'perl-Term-ShellUI',
+  # 'perl-Term-Size-Perl',
+  # 'perl-Sys-SigAction',
+  # 'IP',
+  # 'perl-Net-SNMP',
+  # 'perl-Time-HiRes',
+  # 'perl-libwww-perl',
+  # 'plymouth-system-theme',
+  # 'pv',
+  # 'socat',
+  # 'spice-vdagent',
+  # 'strace',
+  # 'sysstat',
+  # 't1lib',
+  # 'tftp',
+  # 'tmpwatch',
+  # 'vino',
+  # 'wacomexpresskeys',
+  # 'wdaemon',
+  # 'wireshark',
+  # 'xdg-user-dirs-gtk',
+  # 'xfsprogs',
+  # 'xvattr',
+  # 'yelp',
+  # 'zlib',
+  # 'zlib-devel',
 
-    package {[
-        'telnet',
-        'mlocate',
-        'wget',
+  package {
+    [
+      'bc',
+      'curl',
+      'dos2unix',
+      'lsof',
+      'man-db',
+      'mlocate',
+      'net-tools',
+      'rsync',
+      'screen',
+      'tcpdump',
+      'telnet',
+      'traceroute',
+      'tree',
+      'vnstat',
+      'wget',
     ]:
-        ensure => present,
-    }
+    ensure => present,
+  }
 
-    # RedHat Specific Packages
-    if ( $::osfamily == 'redhat' ) {
-        package {[
-            'bind-utils',
-            'perl-MIME-tools',
-        ]:
-            ensure => present,
-        }
+  if ( $::osfamily == 'redhat' ) {
+    package {
+      [
+        'bind-utils',
+        'mailx',
+        'man-pages',
+        'perl-MIME-tools',
+        'redhat-lsb-core',
+        'vim-enhanced',
+        'yum-utils',
+      ]:
+      ensure => present,
     }
+  }
 
-    # Placeholder for Debian Specific Packages
-    # if ( $::osfamily == 'Debian' ) {
-    # }
+  if ( $::osfamily == 'Debian' ) {
+    package {
+      [
+        'dnsutils',
+      ]:
+      ensure => present,
+    }
+  }
 }
