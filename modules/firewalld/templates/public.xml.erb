@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<zone>
+  <short>PublicZone</short>
+  <description>For use in restricted areas. Only selected incoming connections are accepted.</description>
+  <service name="ssh"/>
+<% if  scope['firewalld::config::services'] != 'undef'  -%>
+<% scope['firewalld::config::services'].each do |service| -%>
+  <service name="<%= service %>"/>
+<% end -%>
+<% end -%>
+<% if  scope['firewalld::reject_addrs'] != 'undef'  -%>
+<% scope['firewalld::reject_addrs'].each do |reject_addr| -%>
+  <rule family="ipv4">
+    <source address="<%= reject_addr %>"/>
+    <reject/>
+  </rule>
+<% end -%>
+<% end -%>
+</zone>
