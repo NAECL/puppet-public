@@ -12,6 +12,7 @@ do
     if [ ${buildfile} != ${builddir}'/backup_*_website' ]
     then
         read site db < ${buildfile}
+        echo -e "\n\n"
         date "+%Y%m%d %H:%M:%S Backing Up ${site} ${db}"
         /usr/local/bin/backup_wordpress.sh ${site} ${db}
         if [ $? -ne 0 ]

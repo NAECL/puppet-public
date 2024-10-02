@@ -4,7 +4,14 @@ class wordpress::config (
   $backup_bucket  = 'ignore',
 ) {
 
-  $wordpress_version = $wordpress::wordpress_version
+  $wp_version = $wordpress::wordpress_version
+  $wp_type = $wordpress::wordpress_type
+
+  if ($wp_type == 'zip') {
+    $unpack_cmd = '/bin/unzip'
+  } else {
+    $unpack_cmd = '/bin/tar xzf'
+  }
 
   file {'/etc/php.ini':
     ensure  => present,
@@ -40,6 +47,14 @@ class wordpress::config (
     user    => 'root',
     hour    => 1,
     minute  => 23,
+  }
+
+  file {'/usr/local/bin/copy_website.sh':
+    ensure  => present,
+    owner   => 'root',
+    group   => 'root',
+    mode    => '0750',
+    source  => 'puppet:///modules/wordpress/copy_website.sh',
   }
 
   file {'/usr/local/bin/backup_websites.sh':
@@ -104,24 +119,24 @@ class wordpress::config (
     minute  => 0,
   }
 
-  exec {"download-wordpress-$wordpress_version.tar.gz":
-    command => "/usr/bin/wget http://aws.naecl.co.uk/public/build/dsl/wordpress-$wordpress_version.tar.gz",
-    creates => "/usr/local/buildfiles/wordpress-$wordpress_version.tar.gz",
+  exec {"download-wordpress-$wp_version.$wp_type":
+    command => "/usr/bin/wget http://aws.naecl.co.uk/public/build/dsl/wordpress-$wp_version.$wp_type",
+    creates => "/usr/local/buildfiles/wordpress-$wp_version.$wp_type",
     cwd     => '/usr/local/buildfiles',
   } ->
 
-  file {"/usr/local/buildfiles/wordpress-$wordpress_version.tar.gz":
+  file {"/usr/local/buildfiles/wordpress-$wp_version.$wp_type":
     owner => 'root',
   } ->
 
   exec {'create-usr-share-wordpress':
-    command => "/bin/tar zxf /usr/local/buildfiles/wordpress-$wordpress_version.tar.gz",
+    command => "$unpack_cmd /usr/local/buildfiles/wordpress-$wp_version.$wp_type",
     cwd     => '/usr/share',
     creates => '/usr/share/wordpress',
   } ->
 
   file {'/usr/share/wordpress/wp-config.php':
-    source  => "puppet:///modules/wordpress/wp-config-$wordpress_version.php",
+    source  => "puppet:///modules/wordpress/wp-config-$wp_version.php",
   } ->
 
   file {'/etc/wordpress':
@@ -195,6 +210,19 @@ class wordpress::config (
     path   => '/etc/build_custom_config',
     line   => "BACKUP_BUCKET=${wordpress::config::backup_bucket}",
     match  => '^BACKUP_BUCKET=',
+  }
+
+# For now just make sure puppet doesn't remove aws. Long term use exec to invoke installer
+# curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+# unzip awscliv2.zip
+# sudo ./aws/install
+
+  file {'/usr/local/bin/aws':
+    ensure  => present,
+  }
+
+  file {'/usr/local/bin/aws_completer':
+    ensure  => present,
   }
 
   create_resources(wordpress::createwebsite, $sites)

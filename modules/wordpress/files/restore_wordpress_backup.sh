@@ -10,7 +10,7 @@ builddir=/usr/local/buildfiles
 weekStamp=$(date '+%Y%V')
 progname=$(basename $0)
 USAGE="
-${progname}: [-h|-H] [-l] [-d <datestamp>] -s <site>
+${progname}: [-h|-H] [-l] [-D] [-W] [-d <datestamp>] -s <site>
 
     -d  Date to restore from (If not present, uses latest date in format %Y%V (YearWeek, E.g. 201904))
 
@@ -25,6 +25,10 @@ ${progname}: [-h|-H] [-l] [-d <datestamp>] -s <site>
     -v  Verbose Mode
 
     -s  Sitename of site to restore (reqd)
+
+    -D  Only Restore Database
+
+    -W  Only Restore www directories
 "
 
 EXTENDED_USAGE="
@@ -69,7 +73,9 @@ info_msg () {
     fi
 }
 
-while getopts ":d:e:Hhls:v" nextarg  >/dev/null 2>&1
+dbrestore=1
+wwwrestore=1
+while getopts ":d:e:Hhls:vDW" nextarg  >/dev/null 2>&1
 do
     case $nextarg in
         v)      verbose=1
@@ -87,6 +93,10 @@ do
                 exit 0
                 ;;
         s)      site=${OPTARG}
+                ;;
+        D)      wwwrestore=0
+                ;;
+        W)      dbrestore=0
                 ;;
         *)      echo -e "${USAGE}\nError: flag -${OPTARG} not supported or used without an argument"
                 exit 1
@@ -112,68 +122,75 @@ then
     exit 0
 fi
 
-info_msg "Restoring Website ${site} to ${wwwDir}/${site}"
-# First restore the tar backup. after checking that there is a backup to copy over the top of.
-if [ ! -d "${wwwDir}/${site}" ]
-then
-    echo "Error: No existing website ${wwwDir}/${site} to restore to. Please create a blank website"
-    exit 1
-fi
-if [ -d "${wwwDir}/${site}.sav" ]
-then
-    echo "Error: There is an existing backup website ${wwwDir}/${site}.sav, please restore this to its original place"
-    exit 1
-fi
-mv ${wwwDir}/${site} ${wwwDir}/${site}.sav
-
 backup_nos=$(echo -e "${listing}" |awk '{print $4}' |grep -E "${site}.${weekStamp}..tar.gz" |sed -e 's/^'${site}.${weekStamp}'//' -e 's/.tar.gz$//' |sort -n)
-
-for backup_no in ${backup_nos}
-do
-    siteBackup=${site}.${weekStamp}${backup_no}.tar.gz
-    info_msg "Restoring Backup File ${siteBackup}"
-    aws --region ${region} s3 cp s3://${BACKUP_BUCKET}/wordpress/${ENVIRONMENT}/${site}/${siteBackup} - | tar zxf - -C ${wwwDir}
-    if [ $? -ne 0 ]
-    then
-        echo "Error: Unable to extract ${siteBackup} from S3 backup"
-        exit 1
-    fi
-done
 # Set the required db to the one matching the last backup
+backup_no=$(echo ${backup_nos} | cut -d " " -f 4)
 dbBackup=${dbName}.${weekStamp}${backup_no}.sql
 
-cp ${wwwDir}/${site}.sav/wp-config.php ${wwwDir}/${site}
-if [ $? -ne 0 ]
+if [ ${wwwrestore} -eq 1 ]
 then
-    echo "Error: Unable to copy ${wwwDir}/${site}.sav/wp-config.php"
-    exit 1
+    info_msg "Restoring Website ${site} to ${wwwDir}/${site}"
+    # First restore the tar backup. after checking that there is a backup to copy over the top of.
+    if [ ! -d "${wwwDir}/${site}" ]
+    then
+        echo "Error: No existing website ${wwwDir}/${site} to restore to. Please create a blank website"
+        exit 1
+    fi
+    if [ -d "${wwwDir}/${site}.sav" ]
+    then
+        echo "Error: There is an existing backup website ${wwwDir}/${site}.sav, please restore this to its original place"
+        exit 1
+    fi
+    mv ${wwwDir}/${site} ${wwwDir}/${site}.sav
+
+    for backup_no in ${backup_nos}
+    do
+        siteBackup=${site}.${weekStamp}${backup_no}.tar.gz
+        info_msg "Restoring Backup File ${siteBackup}"
+        aws --region ${region} s3 cp s3://${BACKUP_BUCKET}/wordpress/${ENVIRONMENT}/${site}/${siteBackup} - | tar zxf - -C ${wwwDir}
+        if [ $? -ne 0 ]
+        then
+            echo "Error: Unable to extract ${siteBackup} from S3 backup"
+            exit 1
+        fi
+    done
+
+    cp ${wwwDir}/${site}.sav/wp-config.php ${wwwDir}/${site}
+    if [ $? -ne 0 ]
+    then
+        echo "Error: Unable to copy ${wwwDir}/${site}.sav/wp-config.php"
+        exit 1
+    fi
 fi
 
-# Now restore the database
-info_msg "Restoring Database ${dbName}"
-aws --region ${region} s3 cp s3://${BACKUP_BUCKET}/wordpress/${ENVIRONMENT}/${site}/${dbBackup}.gz /tmp >/dev/null
-if [ $? -ne 0 ]
+if [ ${dbrestore} -eq 1 ]
 then
-    echo -e "Error: unable to retrieve ${dbBackup}.gz from S3 to ${dbBackup}.gz"
-    exit 1
-fi
+    # Now restore the database
+    info_msg "Restoring Database ${dbName}"
+    aws --region ${region} s3 cp s3://${BACKUP_BUCKET}/wordpress/${ENVIRONMENT}/${site}/${dbBackup}.gz /tmp >/dev/null
+    if [ $? -ne 0 ]
+    then
+        echo -e "Error: unable to retrieve ${dbBackup}.gz from S3 to ${dbBackup}.gz"
+        exit 1
+    fi
 
-dbBackup="/tmp/${dbBackup}"
-gzip -d ${dbBackup}.gz
-if [ $? -ne 0 ]
-then
-    echo -e "Error: unable to unzip ${dbBackup}.gz"
-    exit 1
-fi
+    dbBackup="/tmp/${dbBackup}"
+    gzip -d ${dbBackup}.gz
+    if [ $? -ne 0 ]
+    then
+        echo -e "Error: unable to unzip ${dbBackup}.gz"
+        exit 1
+    fi
 
-echo -e "show databases;\ndrop database ${dbName};\ncreate database ${dbName};\nuse ${dbName};\nsource ${dbBackup};" | mysql >/dev/null
-if [ $? -ne 0 ]
-then
-    echo "Error: Unable to restore database backup ${dbBackup}"
+    echo -e "show databases;\ndrop database ${dbName};\ncreate database ${dbName};\nuse ${dbName};\nsource ${dbBackup};" | mysql >/dev/null
+    if [ $? -ne 0 ]
+    then
+        echo "Error: Unable to restore database backup ${dbBackup}"
+        rm ${dbBackup}
+        exit 1
+    fi
     rm ${dbBackup}
-    exit 1
 fi
-rm ${dbBackup}
 
 info_msg "Wordpress Successfully Restored ${site}"
 info_msg "Once you have checked you may want to remove the directory ${wwwDir}/${site}.sav"

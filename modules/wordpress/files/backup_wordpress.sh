@@ -18,7 +18,7 @@
 
 export JAVA_HOME=/usr/lib/jvm/jre
 export EC2_HOME=/opt/aws/apitools/ec2
-export PATH=/usr/local/sbin:/sbin:/bin:/usr/sbin:/usr/bin:/opt/aws/bin:/root/bin
+export PATH=/usr/local/sbin:/sbin:/bin:/usr/sbin:/usr/bin:/opt/aws/bin:/root/bin:/usr/local/bin
 export HOME=/root
 
 . /etc/build_custom_config
@@ -73,4 +73,3 @@ then
 fi
 
 date '+%Y%m%d %H:%M:%S Backup OK' > ${stateFile}
-echo -e "\n\n"
