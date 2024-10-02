@@ -38,6 +38,18 @@ class base::config (
     default  : { }
   }
 
+  $family=$facts['os']['family']
+  $full_release=$facts['os']['release']['full']
+  $major_release=$facts['os']['release']['major']
+  $minor_release=$facts['os']['release']['minor']
+  file {"/etc/os_details_facts":
+    ensure  => present,
+    mode    => '0750',
+    owner   => 'root',
+    group   => 'root',
+    content => "Family = $family\nFull Release = $full_release\nMajor Release = $major_release\nMinor Release = $minor_release\n",
+  } ->
+
   file {'/etc/build_custom_config':
     ensure => present,
     mode   => '0750',
@@ -170,4 +182,6 @@ class base::config (
     hour    => 1,
     minute  => 0,
   }
+
+  class {'firewalld': role => $role, }
 }

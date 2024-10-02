@@ -17,6 +17,15 @@ class base::services (
     $cron_service = 'cron'
   }
 
+  service {'vnstat':
+    ensure => running,
+    enable => true,
+  }
+
+  file {'/var/lib/vnstat/eth0':
+    owner   => 'vnstat',
+  }
+
   service {"${cron_service}":
     ensure => running,
     enable => true,
